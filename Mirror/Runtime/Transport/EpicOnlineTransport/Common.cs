@@ -167,8 +167,9 @@ namespace EpicTransport {
 	        };
             Result getPacketSizeResult = EOSSDKComponent.GetP2PInterface()
                 .GetNextReceivedPacketSize(ref getNextReceivedPacketSizeOptions, out var packetSize);
-
-            if (getPacketSizeResult != Result.Success) {
+            
+            if (getPacketSizeResult != Result.Success || packetSize == 0)
+            {
                 receiveBuffer = null;
                 clientProductUserId = null;
                 socketId = default;
