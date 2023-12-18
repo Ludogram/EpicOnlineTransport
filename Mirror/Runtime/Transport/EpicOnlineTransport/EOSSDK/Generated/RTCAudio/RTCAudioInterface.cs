@@ -59,6 +59,16 @@ namespace Epic.OnlineServices.RTCAudio
 		public const int AudiooutputdeviceinfoApiLatest = 1;
 
 		/// <summary>
+		/// The most recent version of the <see cref="CopyInputDeviceInformationByIndex" /> API.
+		/// </summary>
+		public const int CopyinputdeviceinformationbyindexApiLatest = 1;
+
+		/// <summary>
+		/// The most recent version of the <see cref="CopyOutputDeviceInformationByIndex" /> API.
+		/// </summary>
+		public const int CopyoutputdeviceinformationbyindexApiLatest = 1;
+
+		/// <summary>
 		/// The most recent version of the <see cref="GetAudioInputDeviceByIndex" /> API.
 		/// </summary>
 		public const int GetaudioinputdevicebyindexApiLatest = 1;
@@ -79,9 +89,44 @@ namespace Epic.OnlineServices.RTCAudio
 		public const int GetaudiooutputdevicescountApiLatest = 1;
 
 		/// <summary>
+		/// The most recent version of the <see cref="GetInputDevicesCount" /> API.
+		/// </summary>
+		public const int GetinputdevicescountApiLatest = 1;
+
+		/// <summary>
+		/// The most recent version of the <see cref="GetOutputDevicesCount" /> API.
+		/// </summary>
+		public const int GetoutputdevicescountApiLatest = 1;
+
+		/// <summary>
+		/// The most recent version of the <see cref="InputDeviceInformation" /> struct.
+		/// </summary>
+		public const int InputdeviceinformationApiLatest = 1;
+
+		/// <summary>
+		/// The most recent version of the <see cref="OutputDeviceInformation" /> struct.
+		/// </summary>
+		public const int OutputdeviceinformationApiLatest = 1;
+
+		/// <summary>
+		/// The most recent version of the <see cref="QueryInputDevicesInformation" /> API.
+		/// </summary>
+		public const int QueryinputdevicesinformationApiLatest = 1;
+
+		/// <summary>
+		/// The most recent version of the <see cref="QueryOutputDevicesInformation" /> API.
+		/// </summary>
+		public const int QueryoutputdevicesinformationApiLatest = 1;
+
+		/// <summary>
 		/// The most recent version of the <see cref="RegisterPlatformAudioUser" /> API.
 		/// </summary>
 		public const int RegisterplatformaudiouserApiLatest = 1;
+
+		/// <summary>
+		/// The most recent version of the <see cref="RegisterPlatformUser" /> API.
+		/// </summary>
+		public const int RegisterplatformuserApiLatest = 1;
 
 		/// <summary>
 		/// The most recent version of the <see cref="SendAudio" /> API.
@@ -99,9 +144,29 @@ namespace Epic.OnlineServices.RTCAudio
 		public const int SetaudiooutputsettingsApiLatest = 1;
 
 		/// <summary>
+		/// The most recent version of the <see cref="SetInputDeviceSettings" /> API.
+		/// </summary>
+		public const int SetinputdevicesettingsApiLatest = 1;
+
+		/// <summary>
+		/// The most recent version of the <see cref="SetOutputDeviceSettings" /> API.
+		/// </summary>
+		public const int SetoutputdevicesettingsApiLatest = 1;
+
+		/// <summary>
 		/// The most recent version of the <see cref="UnregisterPlatformAudioUser" /> API.
 		/// </summary>
 		public const int UnregisterplatformaudiouserApiLatest = 1;
+
+		/// <summary>
+		/// The most recent version of the <see cref="UnregisterPlatformUser" /> API.
+		/// </summary>
+		public const int UnregisterplatformuserApiLatest = 1;
+
+		/// <summary>
+		/// The most recent version of the <see cref="UpdateParticipantVolume" /> API.
+		/// </summary>
+		public const int UpdateparticipantvolumeApiLatest = 1;
 
 		/// <summary>
 		/// The most recent version of the <see cref="UpdateReceiving" /> API.
@@ -109,9 +174,19 @@ namespace Epic.OnlineServices.RTCAudio
 		public const int UpdatereceivingApiLatest = 1;
 
 		/// <summary>
+		/// The most recent version of the <see cref="UpdateReceivingVolume" /> API.
+		/// </summary>
+		public const int UpdatereceivingvolumeApiLatest = 1;
+
+		/// <summary>
 		/// The most recent version of the <see cref="UpdateSending" /> API.
 		/// </summary>
 		public const int UpdatesendingApiLatest = 1;
+
+		/// <summary>
+		/// The most recent version of the <see cref="UpdateSendingVolume" /> API.
+		/// </summary>
+		public const int UpdatesendingvolumeApiLatest = 1;
 
 		/// <summary>
 		/// Register to receive notifications with remote audio buffers before they are rendered.
@@ -128,21 +203,21 @@ namespace Epic.OnlineServices.RTCAudio
 		/// <returns>
 		/// Notification ID representing the registered callback if successful, an invalid NotificationId if not
 		/// </returns>
-		public ulong AddNotifyAudioBeforeRender(AddNotifyAudioBeforeRenderOptions options, object clientData, OnAudioBeforeRenderCallback completionDelegate)
+		public ulong AddNotifyAudioBeforeRender(ref AddNotifyAudioBeforeRenderOptions options, object clientData, OnAudioBeforeRenderCallback completionDelegate)
 		{
-			var optionsAddress = System.IntPtr.Zero;
-			Helper.TryMarshalSet<AddNotifyAudioBeforeRenderOptionsInternal, AddNotifyAudioBeforeRenderOptions>(ref optionsAddress, options);
+			AddNotifyAudioBeforeRenderOptionsInternal optionsInternal = new AddNotifyAudioBeforeRenderOptionsInternal();
+			optionsInternal.Set(ref options);
 
 			var clientDataAddress = System.IntPtr.Zero;
 
 			var completionDelegateInternal = new OnAudioBeforeRenderCallbackInternal(OnAudioBeforeRenderCallbackInternalImplementation);
-			Helper.AddCallback(ref clientDataAddress, clientData, completionDelegate, completionDelegateInternal);
+			Helper.AddCallback(out clientDataAddress, clientData, completionDelegate, completionDelegateInternal);
 
-			var funcResult = Bindings.EOS_RTCAudio_AddNotifyAudioBeforeRender(InnerHandle, optionsAddress, clientDataAddress, completionDelegateInternal);
+			var funcResult = Bindings.EOS_RTCAudio_AddNotifyAudioBeforeRender(InnerHandle, ref optionsInternal, clientDataAddress, completionDelegateInternal);
 
-			Helper.TryMarshalDispose(ref optionsAddress);
+			Helper.Dispose(ref optionsInternal);
 
-			Helper.TryAssignNotificationIdToCallback(clientDataAddress, funcResult);
+			Helper.AssignNotificationIdToCallback(clientDataAddress, funcResult);
 
 			return funcResult;
 		}
@@ -162,21 +237,21 @@ namespace Epic.OnlineServices.RTCAudio
 		/// <returns>
 		/// Notification ID representing the registered callback if successful, an invalid NotificationId if not
 		/// </returns>
-		public ulong AddNotifyAudioBeforeSend(AddNotifyAudioBeforeSendOptions options, object clientData, OnAudioBeforeSendCallback completionDelegate)
+		public ulong AddNotifyAudioBeforeSend(ref AddNotifyAudioBeforeSendOptions options, object clientData, OnAudioBeforeSendCallback completionDelegate)
 		{
-			var optionsAddress = System.IntPtr.Zero;
-			Helper.TryMarshalSet<AddNotifyAudioBeforeSendOptionsInternal, AddNotifyAudioBeforeSendOptions>(ref optionsAddress, options);
+			AddNotifyAudioBeforeSendOptionsInternal optionsInternal = new AddNotifyAudioBeforeSendOptionsInternal();
+			optionsInternal.Set(ref options);
 
 			var clientDataAddress = System.IntPtr.Zero;
 
 			var completionDelegateInternal = new OnAudioBeforeSendCallbackInternal(OnAudioBeforeSendCallbackInternalImplementation);
-			Helper.AddCallback(ref clientDataAddress, clientData, completionDelegate, completionDelegateInternal);
+			Helper.AddCallback(out clientDataAddress, clientData, completionDelegate, completionDelegateInternal);
 
-			var funcResult = Bindings.EOS_RTCAudio_AddNotifyAudioBeforeSend(InnerHandle, optionsAddress, clientDataAddress, completionDelegateInternal);
+			var funcResult = Bindings.EOS_RTCAudio_AddNotifyAudioBeforeSend(InnerHandle, ref optionsInternal, clientDataAddress, completionDelegateInternal);
 
-			Helper.TryMarshalDispose(ref optionsAddress);
+			Helper.Dispose(ref optionsInternal);
 
-			Helper.TryAssignNotificationIdToCallback(clientDataAddress, funcResult);
+			Helper.AssignNotificationIdToCallback(clientDataAddress, funcResult);
 
 			return funcResult;
 		}
@@ -186,29 +261,39 @@ namespace Epic.OnlineServices.RTCAudio
 		/// 
 		/// If the returned NotificationId is valid, you must call <see cref="RemoveNotifyAudioDevicesChanged" /> when you no longer wish
 		/// to have your CompletionDelegate called.
+		/// 
+		/// The library will try to use user selected audio device while following these rules:
+		/// - if none of the audio devices has been available and connected before - the library will try to use it;
+		/// - if user selected device failed for some reason, default device will be used instead (and user selected device will be memorized);
+		/// - if user selected a device but it was not used for some reason (and default was used instead), when devices selection is triggered we will try to use user selected device again;
+		/// - triggers to change a device: when new audio device appears or disappears - library will try to use previously user selected;
+		/// - if for any reason, a device cannot be used - the library will fallback to using default;
+		/// - if a configuration of the current audio device has been changed, it will be restarted.
 		/// <seealso cref="Common.InvalidNotificationid" />
 		/// <seealso cref="RemoveNotifyAudioDevicesChanged" />
+		/// <seealso cref="SetAudioInputSettingsOptions" />
+		/// <seealso cref="SetAudioOutputSettingsOptions" />
 		/// </summary>
 		/// <param name="clientData">Arbitrary data that is passed back in the CompletionDelegate</param>
 		/// <param name="completionDelegate">The callback to be fired when an audio device change occurs</param>
 		/// <returns>
 		/// Notification ID representing the registered callback if successful, an invalid NotificationId if not
 		/// </returns>
-		public ulong AddNotifyAudioDevicesChanged(AddNotifyAudioDevicesChangedOptions options, object clientData, OnAudioDevicesChangedCallback completionDelegate)
+		public ulong AddNotifyAudioDevicesChanged(ref AddNotifyAudioDevicesChangedOptions options, object clientData, OnAudioDevicesChangedCallback completionDelegate)
 		{
-			var optionsAddress = System.IntPtr.Zero;
-			Helper.TryMarshalSet<AddNotifyAudioDevicesChangedOptionsInternal, AddNotifyAudioDevicesChangedOptions>(ref optionsAddress, options);
+			AddNotifyAudioDevicesChangedOptionsInternal optionsInternal = new AddNotifyAudioDevicesChangedOptionsInternal();
+			optionsInternal.Set(ref options);
 
 			var clientDataAddress = System.IntPtr.Zero;
 
 			var completionDelegateInternal = new OnAudioDevicesChangedCallbackInternal(OnAudioDevicesChangedCallbackInternalImplementation);
-			Helper.AddCallback(ref clientDataAddress, clientData, completionDelegate, completionDelegateInternal);
+			Helper.AddCallback(out clientDataAddress, clientData, completionDelegate, completionDelegateInternal);
 
-			var funcResult = Bindings.EOS_RTCAudio_AddNotifyAudioDevicesChanged(InnerHandle, optionsAddress, clientDataAddress, completionDelegateInternal);
+			var funcResult = Bindings.EOS_RTCAudio_AddNotifyAudioDevicesChanged(InnerHandle, ref optionsInternal, clientDataAddress, completionDelegateInternal);
 
-			Helper.TryMarshalDispose(ref optionsAddress);
+			Helper.Dispose(ref optionsInternal);
 
-			Helper.TryAssignNotificationIdToCallback(clientDataAddress, funcResult);
+			Helper.AssignNotificationIdToCallback(clientDataAddress, funcResult);
 
 			return funcResult;
 		}
@@ -226,21 +311,21 @@ namespace Epic.OnlineServices.RTCAudio
 		/// <returns>
 		/// Notification ID representing the registered callback if successful, an invalid NotificationId if not
 		/// </returns>
-		public ulong AddNotifyAudioInputState(AddNotifyAudioInputStateOptions options, object clientData, OnAudioInputStateCallback completionDelegate)
+		public ulong AddNotifyAudioInputState(ref AddNotifyAudioInputStateOptions options, object clientData, OnAudioInputStateCallback completionDelegate)
 		{
-			var optionsAddress = System.IntPtr.Zero;
-			Helper.TryMarshalSet<AddNotifyAudioInputStateOptionsInternal, AddNotifyAudioInputStateOptions>(ref optionsAddress, options);
+			AddNotifyAudioInputStateOptionsInternal optionsInternal = new AddNotifyAudioInputStateOptionsInternal();
+			optionsInternal.Set(ref options);
 
 			var clientDataAddress = System.IntPtr.Zero;
 
 			var completionDelegateInternal = new OnAudioInputStateCallbackInternal(OnAudioInputStateCallbackInternalImplementation);
-			Helper.AddCallback(ref clientDataAddress, clientData, completionDelegate, completionDelegateInternal);
+			Helper.AddCallback(out clientDataAddress, clientData, completionDelegate, completionDelegateInternal);
 
-			var funcResult = Bindings.EOS_RTCAudio_AddNotifyAudioInputState(InnerHandle, optionsAddress, clientDataAddress, completionDelegateInternal);
+			var funcResult = Bindings.EOS_RTCAudio_AddNotifyAudioInputState(InnerHandle, ref optionsInternal, clientDataAddress, completionDelegateInternal);
 
-			Helper.TryMarshalDispose(ref optionsAddress);
+			Helper.Dispose(ref optionsInternal);
 
-			Helper.TryAssignNotificationIdToCallback(clientDataAddress, funcResult);
+			Helper.AssignNotificationIdToCallback(clientDataAddress, funcResult);
 
 			return funcResult;
 		}
@@ -258,21 +343,21 @@ namespace Epic.OnlineServices.RTCAudio
 		/// <returns>
 		/// Notification ID representing the registered callback if successful, an invalid NotificationId if not
 		/// </returns>
-		public ulong AddNotifyAudioOutputState(AddNotifyAudioOutputStateOptions options, object clientData, OnAudioOutputStateCallback completionDelegate)
+		public ulong AddNotifyAudioOutputState(ref AddNotifyAudioOutputStateOptions options, object clientData, OnAudioOutputStateCallback completionDelegate)
 		{
-			var optionsAddress = System.IntPtr.Zero;
-			Helper.TryMarshalSet<AddNotifyAudioOutputStateOptionsInternal, AddNotifyAudioOutputStateOptions>(ref optionsAddress, options);
+			AddNotifyAudioOutputStateOptionsInternal optionsInternal = new AddNotifyAudioOutputStateOptionsInternal();
+			optionsInternal.Set(ref options);
 
 			var clientDataAddress = System.IntPtr.Zero;
 
 			var completionDelegateInternal = new OnAudioOutputStateCallbackInternal(OnAudioOutputStateCallbackInternalImplementation);
-			Helper.AddCallback(ref clientDataAddress, clientData, completionDelegate, completionDelegateInternal);
+			Helper.AddCallback(out clientDataAddress, clientData, completionDelegate, completionDelegateInternal);
 
-			var funcResult = Bindings.EOS_RTCAudio_AddNotifyAudioOutputState(InnerHandle, optionsAddress, clientDataAddress, completionDelegateInternal);
+			var funcResult = Bindings.EOS_RTCAudio_AddNotifyAudioOutputState(InnerHandle, ref optionsInternal, clientDataAddress, completionDelegateInternal);
 
-			Helper.TryMarshalDispose(ref optionsAddress);
+			Helper.Dispose(ref optionsInternal);
 
-			Helper.TryAssignNotificationIdToCallback(clientDataAddress, funcResult);
+			Helper.AssignNotificationIdToCallback(clientDataAddress, funcResult);
 
 			return funcResult;
 		}
@@ -290,26 +375,94 @@ namespace Epic.OnlineServices.RTCAudio
 		/// <returns>
 		/// Notification ID representing the registered callback if successful, an invalid NotificationId if not
 		/// </returns>
-		public ulong AddNotifyParticipantUpdated(AddNotifyParticipantUpdatedOptions options, object clientData, OnParticipantUpdatedCallback completionDelegate)
+		public ulong AddNotifyParticipantUpdated(ref AddNotifyParticipantUpdatedOptions options, object clientData, OnParticipantUpdatedCallback completionDelegate)
 		{
-			var optionsAddress = System.IntPtr.Zero;
-			Helper.TryMarshalSet<AddNotifyParticipantUpdatedOptionsInternal, AddNotifyParticipantUpdatedOptions>(ref optionsAddress, options);
+			AddNotifyParticipantUpdatedOptionsInternal optionsInternal = new AddNotifyParticipantUpdatedOptionsInternal();
+			optionsInternal.Set(ref options);
 
 			var clientDataAddress = System.IntPtr.Zero;
 
 			var completionDelegateInternal = new OnParticipantUpdatedCallbackInternal(OnParticipantUpdatedCallbackInternalImplementation);
-			Helper.AddCallback(ref clientDataAddress, clientData, completionDelegate, completionDelegateInternal);
+			Helper.AddCallback(out clientDataAddress, clientData, completionDelegate, completionDelegateInternal);
 
-			var funcResult = Bindings.EOS_RTCAudio_AddNotifyParticipantUpdated(InnerHandle, optionsAddress, clientDataAddress, completionDelegateInternal);
+			var funcResult = Bindings.EOS_RTCAudio_AddNotifyParticipantUpdated(InnerHandle, ref optionsInternal, clientDataAddress, completionDelegateInternal);
 
-			Helper.TryMarshalDispose(ref optionsAddress);
+			Helper.Dispose(ref optionsInternal);
 
-			Helper.TryAssignNotificationIdToCallback(clientDataAddress, funcResult);
+			Helper.AssignNotificationIdToCallback(clientDataAddress, funcResult);
 
 			return funcResult;
 		}
 
 		/// <summary>
+		/// Fetches an audio input device's information from then given index that are cached locally.
+		/// <seealso cref="Release" />
+		/// <seealso cref="GetAudioInputDevicesCount" />
+		/// <seealso cref="AddNotifyAudioDevicesChanged" />
+		/// </summary>
+		/// <param name="options">structure containing the index being accessed</param>
+		/// <param name="outInputDeviceInformation">The audio input device's information for the given index, if it exists and is valid, use <see cref="Release" /> when finished</param>
+		/// <returns>
+		/// <see cref="Result.Success" /> if the information is available and passed out in OutInputDeviceInformation
+		/// <see cref="Result.InvalidParameters" /> if you pass a null pointer for the out parameter
+		/// <see cref="Result.NotFound" /> if the audio input device's information is not found
+		/// </returns>
+		public Result CopyInputDeviceInformationByIndex(ref CopyInputDeviceInformationByIndexOptions options, out InputDeviceInformation? outInputDeviceInformation)
+		{
+			CopyInputDeviceInformationByIndexOptionsInternal optionsInternal = new CopyInputDeviceInformationByIndexOptionsInternal();
+			optionsInternal.Set(ref options);
+
+			var outInputDeviceInformationAddress = System.IntPtr.Zero;
+
+			var funcResult = Bindings.EOS_RTCAudio_CopyInputDeviceInformationByIndex(InnerHandle, ref optionsInternal, ref outInputDeviceInformationAddress);
+
+			Helper.Dispose(ref optionsInternal);
+
+			Helper.Get<InputDeviceInformationInternal, InputDeviceInformation>(outInputDeviceInformationAddress, out outInputDeviceInformation);
+			if (outInputDeviceInformation != null)
+			{
+				Bindings.EOS_RTCAudio_InputDeviceInformation_Release(outInputDeviceInformationAddress);
+			}
+
+			return funcResult;
+		}
+
+		/// <summary>
+		/// Fetches an audio output device's information from then given index that are cached locally.
+		/// <seealso cref="Release" />
+		/// <seealso cref="GetAudioOutputDevicesCount" />
+		/// <seealso cref="AddNotifyAudioDevicesChanged" />
+		/// </summary>
+		/// <param name="options">structure containing the index being accessed</param>
+		/// <param name="outOutputDeviceInformation">The audio output device's information for the given index, if it exists and is valid, use <see cref="Release" /> when finished</param>
+		/// <returns>
+		/// <see cref="Result.Success" /> if the information is available and passed out in OutOutputDeviceInformation
+		/// <see cref="Result.InvalidParameters" /> if you pass a null pointer for the out parameter
+		/// <see cref="Result.NotFound" /> if the audio output device's information is not found
+		/// </returns>
+		public Result CopyOutputDeviceInformationByIndex(ref CopyOutputDeviceInformationByIndexOptions options, out OutputDeviceInformation? outOutputDeviceInformation)
+		{
+			CopyOutputDeviceInformationByIndexOptionsInternal optionsInternal = new CopyOutputDeviceInformationByIndexOptionsInternal();
+			optionsInternal.Set(ref options);
+
+			var outOutputDeviceInformationAddress = System.IntPtr.Zero;
+
+			var funcResult = Bindings.EOS_RTCAudio_CopyOutputDeviceInformationByIndex(InnerHandle, ref optionsInternal, ref outOutputDeviceInformationAddress);
+
+			Helper.Dispose(ref optionsInternal);
+
+			Helper.Get<OutputDeviceInformationInternal, OutputDeviceInformation>(outOutputDeviceInformationAddress, out outOutputDeviceInformation);
+			if (outOutputDeviceInformation != null)
+			{
+				Bindings.EOS_RTCAudio_OutputDeviceInformation_Release(outOutputDeviceInformationAddress);
+			}
+
+			return funcResult;
+		}
+
+		/// <summary>
+		/// DEPRECATED! Use <see cref="QueryInputDevicesInformation" />, <see cref="CopyInputDeviceInformationByIndex" /> instead.
+		/// 
 		/// Fetches an audio input device's info from then given index. The returned value should not be cached and important
 		/// information should be copied off of the result object immediately.
 		/// <seealso cref="GetAudioInputDevicesCount" />
@@ -317,23 +470,25 @@ namespace Epic.OnlineServices.RTCAudio
 		/// </summary>
 		/// <param name="options">structure containing the index being accessed</param>
 		/// <returns>
-		/// A pointer to the device information, or NULL on error. You should NOT keep hold of this pointer.
+		/// A pointer to the device information, or <see langword="null" /> on error. You should NOT keep hold of this pointer.
 		/// </returns>
-		public AudioInputDeviceInfo GetAudioInputDeviceByIndex(GetAudioInputDeviceByIndexOptions options)
+		public AudioInputDeviceInfo? GetAudioInputDeviceByIndex(ref GetAudioInputDeviceByIndexOptions options)
 		{
-			var optionsAddress = System.IntPtr.Zero;
-			Helper.TryMarshalSet<GetAudioInputDeviceByIndexOptionsInternal, GetAudioInputDeviceByIndexOptions>(ref optionsAddress, options);
+			GetAudioInputDeviceByIndexOptionsInternal optionsInternal = new GetAudioInputDeviceByIndexOptionsInternal();
+			optionsInternal.Set(ref options);
 
-			var funcResult = Bindings.EOS_RTCAudio_GetAudioInputDeviceByIndex(InnerHandle, optionsAddress);
+			var funcResult = Bindings.EOS_RTCAudio_GetAudioInputDeviceByIndex(InnerHandle, ref optionsInternal);
 
-			Helper.TryMarshalDispose(ref optionsAddress);
+			Helper.Dispose(ref optionsInternal);
 
-			AudioInputDeviceInfo funcResultReturn;
-			Helper.TryMarshalGet<AudioInputDeviceInfoInternal, AudioInputDeviceInfo>(funcResult, out funcResultReturn);
+			AudioInputDeviceInfo? funcResultReturn;
+			Helper.Get<AudioInputDeviceInfoInternal, AudioInputDeviceInfo>(funcResult, out funcResultReturn);
 			return funcResultReturn;
 		}
 
 		/// <summary>
+		/// DEPRECATED! Use <see cref="QueryInputDevicesInformation" />, <see cref="GetInputDevicesCount" /> instead.
+		/// 
 		/// Returns the number of audio input devices available in the system.
 		/// 
 		/// The returned value should not be cached and should instead be used immediately with the <see cref="GetAudioInputDeviceByIndex" />
@@ -345,19 +500,21 @@ namespace Epic.OnlineServices.RTCAudio
 		/// <returns>
 		/// The number of audio input devices
 		/// </returns>
-		public uint GetAudioInputDevicesCount(GetAudioInputDevicesCountOptions options)
+		public uint GetAudioInputDevicesCount(ref GetAudioInputDevicesCountOptions options)
 		{
-			var optionsAddress = System.IntPtr.Zero;
-			Helper.TryMarshalSet<GetAudioInputDevicesCountOptionsInternal, GetAudioInputDevicesCountOptions>(ref optionsAddress, options);
+			GetAudioInputDevicesCountOptionsInternal optionsInternal = new GetAudioInputDevicesCountOptionsInternal();
+			optionsInternal.Set(ref options);
 
-			var funcResult = Bindings.EOS_RTCAudio_GetAudioInputDevicesCount(InnerHandle, optionsAddress);
+			var funcResult = Bindings.EOS_RTCAudio_GetAudioInputDevicesCount(InnerHandle, ref optionsInternal);
 
-			Helper.TryMarshalDispose(ref optionsAddress);
+			Helper.Dispose(ref optionsInternal);
 
 			return funcResult;
 		}
 
 		/// <summary>
+		/// DEPRECATED! Use <see cref="QueryOutputDevicesInformation" />, <see cref="CopyOutputDeviceInformationByIndex" /> instead.
+		/// 
 		/// Fetches an audio output device's info from then given index.
 		/// 
 		/// The returned value should not be cached and important information should be copied off of the result object immediately.
@@ -366,23 +523,25 @@ namespace Epic.OnlineServices.RTCAudio
 		/// </summary>
 		/// <param name="options">structure containing the index being accessed</param>
 		/// <returns>
-		/// A pointer to the device information, or NULL on error. You should NOT keep hold of this pointer.
+		/// A pointer to the device information, or <see langword="null" /> on error. You should NOT keep hold of this pointer.
 		/// </returns>
-		public AudioOutputDeviceInfo GetAudioOutputDeviceByIndex(GetAudioOutputDeviceByIndexOptions options)
+		public AudioOutputDeviceInfo? GetAudioOutputDeviceByIndex(ref GetAudioOutputDeviceByIndexOptions options)
 		{
-			var optionsAddress = System.IntPtr.Zero;
-			Helper.TryMarshalSet<GetAudioOutputDeviceByIndexOptionsInternal, GetAudioOutputDeviceByIndexOptions>(ref optionsAddress, options);
+			GetAudioOutputDeviceByIndexOptionsInternal optionsInternal = new GetAudioOutputDeviceByIndexOptionsInternal();
+			optionsInternal.Set(ref options);
 
-			var funcResult = Bindings.EOS_RTCAudio_GetAudioOutputDeviceByIndex(InnerHandle, optionsAddress);
+			var funcResult = Bindings.EOS_RTCAudio_GetAudioOutputDeviceByIndex(InnerHandle, ref optionsInternal);
 
-			Helper.TryMarshalDispose(ref optionsAddress);
+			Helper.Dispose(ref optionsInternal);
 
-			AudioOutputDeviceInfo funcResultReturn;
-			Helper.TryMarshalGet<AudioOutputDeviceInfoInternal, AudioOutputDeviceInfo>(funcResult, out funcResultReturn);
+			AudioOutputDeviceInfo? funcResultReturn;
+			Helper.Get<AudioOutputDeviceInfoInternal, AudioOutputDeviceInfo>(funcResult, out funcResultReturn);
 			return funcResultReturn;
 		}
 
 		/// <summary>
+		/// DEPRECATED! Use <see cref="QueryOutputDevicesInformation" />, <see cref="GetOutputDevicesCount" /> instead.
+		/// 
 		/// Returns the number of audio output devices available in the system.
 		/// 
 		/// The returned value should not be cached and should instead be used immediately with the <see cref="GetAudioOutputDeviceByIndex" />
@@ -394,19 +553,119 @@ namespace Epic.OnlineServices.RTCAudio
 		/// <returns>
 		/// The number of audio output devices
 		/// </returns>
-		public uint GetAudioOutputDevicesCount(GetAudioOutputDevicesCountOptions options)
+		public uint GetAudioOutputDevicesCount(ref GetAudioOutputDevicesCountOptions options)
 		{
-			var optionsAddress = System.IntPtr.Zero;
-			Helper.TryMarshalSet<GetAudioOutputDevicesCountOptionsInternal, GetAudioOutputDevicesCountOptions>(ref optionsAddress, options);
+			GetAudioOutputDevicesCountOptionsInternal optionsInternal = new GetAudioOutputDevicesCountOptionsInternal();
+			optionsInternal.Set(ref options);
 
-			var funcResult = Bindings.EOS_RTCAudio_GetAudioOutputDevicesCount(InnerHandle, optionsAddress);
+			var funcResult = Bindings.EOS_RTCAudio_GetAudioOutputDevicesCount(InnerHandle, ref optionsInternal);
 
-			Helper.TryMarshalDispose(ref optionsAddress);
+			Helper.Dispose(ref optionsInternal);
 
 			return funcResult;
 		}
 
 		/// <summary>
+		/// Fetch the number of audio input devices available in the system that are cached locally.
+		/// 
+		/// The returned value should not be cached and should instead be used immediately with
+		/// the <see cref="CopyInputDeviceInformationByIndex" /> function.
+		/// <seealso cref="CopyInputDeviceInformationByIndex" />
+		/// <seealso cref="AddNotifyAudioDevicesChanged" />
+		/// </summary>
+		/// <param name="options">structure containing the parameters for the operation</param>
+		/// <returns>
+		/// The number of audio input devices available in the system or 0 if there is an error
+		/// </returns>
+		public uint GetInputDevicesCount(ref GetInputDevicesCountOptions options)
+		{
+			GetInputDevicesCountOptionsInternal optionsInternal = new GetInputDevicesCountOptionsInternal();
+			optionsInternal.Set(ref options);
+
+			var funcResult = Bindings.EOS_RTCAudio_GetInputDevicesCount(InnerHandle, ref optionsInternal);
+
+			Helper.Dispose(ref optionsInternal);
+
+			return funcResult;
+		}
+
+		/// <summary>
+		/// Fetch the number of audio output devices available in the system that are cached locally.
+		/// 
+		/// The returned value should not be cached and should instead be used immediately with
+		/// the <see cref="CopyOutputDeviceInformationByIndex" /> function.
+		/// <seealso cref="CopyOutputDeviceInformationByIndex" />
+		/// <seealso cref="AddNotifyAudioDevicesChanged" />
+		/// </summary>
+		/// <param name="options">structure containing the parameters for the operation</param>
+		/// <returns>
+		/// The number of audio output devices available in the system or 0 if there is an error
+		/// </returns>
+		public uint GetOutputDevicesCount(ref GetOutputDevicesCountOptions options)
+		{
+			GetOutputDevicesCountOptionsInternal optionsInternal = new GetOutputDevicesCountOptionsInternal();
+			optionsInternal.Set(ref options);
+
+			var funcResult = Bindings.EOS_RTCAudio_GetOutputDevicesCount(InnerHandle, ref optionsInternal);
+
+			Helper.Dispose(ref optionsInternal);
+
+			return funcResult;
+		}
+
+		/// <summary>
+		/// Query for a list of audio input devices available in the system together with their specifications.
+		/// </summary>
+		/// <param name="options">structure containing the parameters for the operation</param>
+		/// <param name="clientData">Arbitrary data that is passed back in the CompletionDelegate</param>
+		/// <param name="completionDelegate">The callback to be fired when the operation completes, either successfully or in error</param>
+		/// <returns>
+		/// <see cref="Result.Success" /> if the operation succeeded
+		/// <see cref="Result.InvalidParameters" /> if any of the parameters are incorrect
+		/// </returns>
+		public void QueryInputDevicesInformation(ref QueryInputDevicesInformationOptions options, object clientData, OnQueryInputDevicesInformationCallback completionDelegate)
+		{
+			QueryInputDevicesInformationOptionsInternal optionsInternal = new QueryInputDevicesInformationOptionsInternal();
+			optionsInternal.Set(ref options);
+
+			var clientDataAddress = System.IntPtr.Zero;
+
+			var completionDelegateInternal = new OnQueryInputDevicesInformationCallbackInternal(OnQueryInputDevicesInformationCallbackInternalImplementation);
+			Helper.AddCallback(out clientDataAddress, clientData, completionDelegate, completionDelegateInternal);
+
+			Bindings.EOS_RTCAudio_QueryInputDevicesInformation(InnerHandle, ref optionsInternal, clientDataAddress, completionDelegateInternal);
+
+			Helper.Dispose(ref optionsInternal);
+		}
+
+		/// <summary>
+		/// Query for a list of audio output devices available in the system together with their specifications.
+		/// </summary>
+		/// <param name="options">structure containing the parameters for the operation</param>
+		/// <param name="clientData">Arbitrary data that is passed back in the CompletionDelegate</param>
+		/// <param name="completionDelegate">The callback to be fired when the operation completes, either successfully or in error</param>
+		/// <returns>
+		/// <see cref="Result.Success" /> if the operation succeeded
+		/// <see cref="Result.InvalidParameters" /> if any of the parameters are incorrect
+		/// </returns>
+		public void QueryOutputDevicesInformation(ref QueryOutputDevicesInformationOptions options, object clientData, OnQueryOutputDevicesInformationCallback completionDelegate)
+		{
+			QueryOutputDevicesInformationOptionsInternal optionsInternal = new QueryOutputDevicesInformationOptionsInternal();
+			optionsInternal.Set(ref options);
+
+			var clientDataAddress = System.IntPtr.Zero;
+
+			var completionDelegateInternal = new OnQueryOutputDevicesInformationCallbackInternal(OnQueryOutputDevicesInformationCallbackInternalImplementation);
+			Helper.AddCallback(out clientDataAddress, clientData, completionDelegate, completionDelegateInternal);
+
+			Bindings.EOS_RTCAudio_QueryOutputDevicesInformation(InnerHandle, ref optionsInternal, clientDataAddress, completionDelegateInternal);
+
+			Helper.Dispose(ref optionsInternal);
+		}
+
+		/// <summary>
+		/// DEPRECATED! Use <see cref="RegisterPlatformUser" /> instead.
+		/// 
 		/// Use this function to inform the audio system of a user.
 		/// 
 		/// This function is only necessary for some platforms.
@@ -415,16 +674,45 @@ namespace Epic.OnlineServices.RTCAudio
 		/// <returns>
 		/// <see cref="Result.Success" /> if the user was successfully registered, <see cref="Result.UnexpectedError" /> otherwise.
 		/// </returns>
-		public Result RegisterPlatformAudioUser(RegisterPlatformAudioUserOptions options)
+		public Result RegisterPlatformAudioUser(ref RegisterPlatformAudioUserOptions options)
 		{
-			var optionsAddress = System.IntPtr.Zero;
-			Helper.TryMarshalSet<RegisterPlatformAudioUserOptionsInternal, RegisterPlatformAudioUserOptions>(ref optionsAddress, options);
+			RegisterPlatformAudioUserOptionsInternal optionsInternal = new RegisterPlatformAudioUserOptionsInternal();
+			optionsInternal.Set(ref options);
 
-			var funcResult = Bindings.EOS_RTCAudio_RegisterPlatformAudioUser(InnerHandle, optionsAddress);
+			var funcResult = Bindings.EOS_RTCAudio_RegisterPlatformAudioUser(InnerHandle, ref optionsInternal);
 
-			Helper.TryMarshalDispose(ref optionsAddress);
+			Helper.Dispose(ref optionsInternal);
 
 			return funcResult;
+		}
+
+		/// <summary>
+		/// Use this function to inform the audio system of a user.
+		/// 
+		/// This function is only necessary for some platforms.
+		/// <seealso cref="UnregisterPlatformUser" />
+		/// </summary>
+		/// <param name="options">structure containing the parameters for the operation</param>
+		/// <param name="clientData">Arbitrary data that is passed back in the CompletionDelegate</param>
+		/// <param name="completionDelegate">The callback to be fired when the operation completes, either successfully or in error</param>
+		/// <returns>
+		/// <see cref="Result.Success" /> if the user was successfully registered
+		/// <see cref="Result.InvalidParameters" /> if any of the parameters are incorrect
+		/// <see cref="Result.UnexpectedError" /> otherwise
+		/// </returns>
+		public void RegisterPlatformUser(ref RegisterPlatformUserOptions options, object clientData, OnRegisterPlatformUserCallback completionDelegate)
+		{
+			RegisterPlatformUserOptionsInternal optionsInternal = new RegisterPlatformUserOptionsInternal();
+			optionsInternal.Set(ref options);
+
+			var clientDataAddress = System.IntPtr.Zero;
+
+			var completionDelegateInternal = new OnRegisterPlatformUserCallbackInternal(OnRegisterPlatformUserCallbackInternalImplementation);
+			Helper.AddCallback(out clientDataAddress, clientData, completionDelegate, completionDelegateInternal);
+
+			Bindings.EOS_RTCAudio_RegisterPlatformUser(InnerHandle, ref optionsInternal, clientDataAddress, completionDelegateInternal);
+
+			Helper.Dispose(ref optionsInternal);
 		}
 
 		/// <summary>
@@ -433,9 +721,9 @@ namespace Epic.OnlineServices.RTCAudio
 		/// <param name="notificationId">The Notification ID representing the registered callback</param>
 		public void RemoveNotifyAudioBeforeRender(ulong notificationId)
 		{
-			Helper.TryRemoveCallbackByNotificationId(notificationId);
-
 			Bindings.EOS_RTCAudio_RemoveNotifyAudioBeforeRender(InnerHandle, notificationId);
+
+			Helper.RemoveCallbackByNotificationId(notificationId);
 		}
 
 		/// <summary>
@@ -444,9 +732,9 @@ namespace Epic.OnlineServices.RTCAudio
 		/// <param name="notificationId">The Notification ID representing the registered callback</param>
 		public void RemoveNotifyAudioBeforeSend(ulong notificationId)
 		{
-			Helper.TryRemoveCallbackByNotificationId(notificationId);
-
 			Bindings.EOS_RTCAudio_RemoveNotifyAudioBeforeSend(InnerHandle, notificationId);
+
+			Helper.RemoveCallbackByNotificationId(notificationId);
 		}
 
 		/// <summary>
@@ -455,9 +743,9 @@ namespace Epic.OnlineServices.RTCAudio
 		/// <param name="notificationId">The Notification ID representing the registered callback</param>
 		public void RemoveNotifyAudioDevicesChanged(ulong notificationId)
 		{
-			Helper.TryRemoveCallbackByNotificationId(notificationId);
-
 			Bindings.EOS_RTCAudio_RemoveNotifyAudioDevicesChanged(InnerHandle, notificationId);
+
+			Helper.RemoveCallbackByNotificationId(notificationId);
 		}
 
 		/// <summary>
@@ -466,9 +754,9 @@ namespace Epic.OnlineServices.RTCAudio
 		/// <param name="notificationId">The Notification ID representing the registered callback</param>
 		public void RemoveNotifyAudioInputState(ulong notificationId)
 		{
-			Helper.TryRemoveCallbackByNotificationId(notificationId);
-
 			Bindings.EOS_RTCAudio_RemoveNotifyAudioInputState(InnerHandle, notificationId);
+
+			Helper.RemoveCallbackByNotificationId(notificationId);
 		}
 
 		/// <summary>
@@ -477,9 +765,9 @@ namespace Epic.OnlineServices.RTCAudio
 		/// <param name="notificationId">The Notification ID representing the registered callback</param>
 		public void RemoveNotifyAudioOutputState(ulong notificationId)
 		{
-			Helper.TryRemoveCallbackByNotificationId(notificationId);
-
 			Bindings.EOS_RTCAudio_RemoveNotifyAudioOutputState(InnerHandle, notificationId);
+
+			Helper.RemoveCallbackByNotificationId(notificationId);
 		}
 
 		/// <summary>
@@ -488,9 +776,9 @@ namespace Epic.OnlineServices.RTCAudio
 		/// <param name="notificationId">The Notification ID representing the registered callback</param>
 		public void RemoveNotifyParticipantUpdated(ulong notificationId)
 		{
-			Helper.TryRemoveCallbackByNotificationId(notificationId);
-
 			Bindings.EOS_RTCAudio_RemoveNotifyParticipantUpdated(InnerHandle, notificationId);
+
+			Helper.RemoveCallbackByNotificationId(notificationId);
 		}
 
 		/// <summary>
@@ -507,19 +795,21 @@ namespace Epic.OnlineServices.RTCAudio
 		/// <see cref="Result.NotFound" /> if the specified room was not found
 		/// <see cref="Result.InvalidState" /> if manual recording was not enabled when joining the room.
 		/// </returns>
-		public Result SendAudio(SendAudioOptions options)
+		public Result SendAudio(ref SendAudioOptions options)
 		{
-			var optionsAddress = System.IntPtr.Zero;
-			Helper.TryMarshalSet<SendAudioOptionsInternal, SendAudioOptions>(ref optionsAddress, options);
+			SendAudioOptionsInternal optionsInternal = new SendAudioOptionsInternal();
+			optionsInternal.Set(ref options);
 
-			var funcResult = Bindings.EOS_RTCAudio_SendAudio(InnerHandle, optionsAddress);
+			var funcResult = Bindings.EOS_RTCAudio_SendAudio(InnerHandle, ref optionsInternal);
 
-			Helper.TryMarshalDispose(ref optionsAddress);
+			Helper.Dispose(ref optionsInternal);
 
 			return funcResult;
 		}
 
 		/// <summary>
+		/// DEPRECATED! Use <see cref="SetInputDeviceSettings" /> instead.
+		/// 
 		/// Use this function to set audio input settings, such as the active input device, volume, or platform AEC.
 		/// </summary>
 		/// <param name="options">structure containing the parameters for the operation.</param>
@@ -527,19 +817,21 @@ namespace Epic.OnlineServices.RTCAudio
 		/// <see cref="Result.Success" /> if the setting was successful
 		/// <see cref="Result.InvalidParameters" /> if any of the parameters are incorrect
 		/// </returns>
-		public Result SetAudioInputSettings(SetAudioInputSettingsOptions options)
+		public Result SetAudioInputSettings(ref SetAudioInputSettingsOptions options)
 		{
-			var optionsAddress = System.IntPtr.Zero;
-			Helper.TryMarshalSet<SetAudioInputSettingsOptionsInternal, SetAudioInputSettingsOptions>(ref optionsAddress, options);
+			SetAudioInputSettingsOptionsInternal optionsInternal = new SetAudioInputSettingsOptionsInternal();
+			optionsInternal.Set(ref options);
 
-			var funcResult = Bindings.EOS_RTCAudio_SetAudioInputSettings(InnerHandle, optionsAddress);
+			var funcResult = Bindings.EOS_RTCAudio_SetAudioInputSettings(InnerHandle, ref optionsInternal);
 
-			Helper.TryMarshalDispose(ref optionsAddress);
+			Helper.Dispose(ref optionsInternal);
 
 			return funcResult;
 		}
 
 		/// <summary>
+		/// DEPRECATED! Use <see cref="SetOutputDeviceSettings" /> instead.
+		/// 
 		/// Use this function to set audio output settings, such as the active output device or volume.
 		/// </summary>
 		/// <param name="options">structure containing the parameters for the operation.</param>
@@ -547,41 +839,120 @@ namespace Epic.OnlineServices.RTCAudio
 		/// <see cref="Result.Success" /> if the setting was successful
 		/// <see cref="Result.InvalidParameters" /> if any of the parameters are incorrect
 		/// </returns>
-		public Result SetAudioOutputSettings(SetAudioOutputSettingsOptions options)
+		public Result SetAudioOutputSettings(ref SetAudioOutputSettingsOptions options)
 		{
-			var optionsAddress = System.IntPtr.Zero;
-			Helper.TryMarshalSet<SetAudioOutputSettingsOptionsInternal, SetAudioOutputSettingsOptions>(ref optionsAddress, options);
+			SetAudioOutputSettingsOptionsInternal optionsInternal = new SetAudioOutputSettingsOptionsInternal();
+			optionsInternal.Set(ref options);
 
-			var funcResult = Bindings.EOS_RTCAudio_SetAudioOutputSettings(InnerHandle, optionsAddress);
+			var funcResult = Bindings.EOS_RTCAudio_SetAudioOutputSettings(InnerHandle, ref optionsInternal);
 
-			Helper.TryMarshalDispose(ref optionsAddress);
+			Helper.Dispose(ref optionsInternal);
 
 			return funcResult;
 		}
 
 		/// <summary>
+		/// Use this function to set audio input device settings, such as the active input device, or platform AEC.
+		/// </summary>
+		/// <param name="options">structure containing the parameters for the operation</param>
+		/// <param name="clientData">Arbitrary data that is passed back in the CompletionDelegate</param>
+		/// <param name="completionDelegate">The callback to be fired when the operation completes, either successfully or in error</param>
+		/// <returns>
+		/// <see cref="Result.Success" /> if the setting was successful
+		/// <see cref="Result.InvalidParameters" /> if any of the parameters are incorrect
+		/// </returns>
+		public void SetInputDeviceSettings(ref SetInputDeviceSettingsOptions options, object clientData, OnSetInputDeviceSettingsCallback completionDelegate)
+		{
+			SetInputDeviceSettingsOptionsInternal optionsInternal = new SetInputDeviceSettingsOptionsInternal();
+			optionsInternal.Set(ref options);
+
+			var clientDataAddress = System.IntPtr.Zero;
+
+			var completionDelegateInternal = new OnSetInputDeviceSettingsCallbackInternal(OnSetInputDeviceSettingsCallbackInternalImplementation);
+			Helper.AddCallback(out clientDataAddress, clientData, completionDelegate, completionDelegateInternal);
+
+			Bindings.EOS_RTCAudio_SetInputDeviceSettings(InnerHandle, ref optionsInternal, clientDataAddress, completionDelegateInternal);
+
+			Helper.Dispose(ref optionsInternal);
+		}
+
+		/// <summary>
+		/// Use this function to set audio output device settings, such as the active output device.
+		/// </summary>
+		/// <param name="options">structure containing the parameters for the operation</param>
+		/// <param name="clientData">Arbitrary data that is passed back in the CompletionDelegate</param>
+		/// <param name="completionDelegate">The callback to be fired when the operation completes, either successfully or in error</param>
+		/// <returns>
+		/// <see cref="Result.Success" /> if the setting was successful
+		/// <see cref="Result.InvalidParameters" /> if any of the parameters are incorrect
+		/// </returns>
+		public void SetOutputDeviceSettings(ref SetOutputDeviceSettingsOptions options, object clientData, OnSetOutputDeviceSettingsCallback completionDelegate)
+		{
+			SetOutputDeviceSettingsOptionsInternal optionsInternal = new SetOutputDeviceSettingsOptionsInternal();
+			optionsInternal.Set(ref options);
+
+			var clientDataAddress = System.IntPtr.Zero;
+
+			var completionDelegateInternal = new OnSetOutputDeviceSettingsCallbackInternal(OnSetOutputDeviceSettingsCallbackInternalImplementation);
+			Helper.AddCallback(out clientDataAddress, clientData, completionDelegate, completionDelegateInternal);
+
+			Bindings.EOS_RTCAudio_SetOutputDeviceSettings(InnerHandle, ref optionsInternal, clientDataAddress, completionDelegateInternal);
+
+			Helper.Dispose(ref optionsInternal);
+		}
+
+		/// <summary>
+		/// DEPRECATED! Use <see cref="UnregisterPlatformUser" /> instead.
+		/// 
 		/// Use this function to remove a user that was added with <see cref="RegisterPlatformAudioUser" />.
 		/// </summary>
 		/// <param name="options">structure containing the parameters for the operation.</param>
 		/// <returns>
 		/// <see cref="Result.Success" /> if the user was successfully unregistered, <see cref="Result.UnexpectedError" /> otherwise.
 		/// </returns>
-		public Result UnregisterPlatformAudioUser(UnregisterPlatformAudioUserOptions options)
+		public Result UnregisterPlatformAudioUser(ref UnregisterPlatformAudioUserOptions options)
 		{
-			var optionsAddress = System.IntPtr.Zero;
-			Helper.TryMarshalSet<UnregisterPlatformAudioUserOptionsInternal, UnregisterPlatformAudioUserOptions>(ref optionsAddress, options);
+			UnregisterPlatformAudioUserOptionsInternal optionsInternal = new UnregisterPlatformAudioUserOptionsInternal();
+			optionsInternal.Set(ref options);
 
-			var funcResult = Bindings.EOS_RTCAudio_UnregisterPlatformAudioUser(InnerHandle, optionsAddress);
+			var funcResult = Bindings.EOS_RTCAudio_UnregisterPlatformAudioUser(InnerHandle, ref optionsInternal);
 
-			Helper.TryMarshalDispose(ref optionsAddress);
+			Helper.Dispose(ref optionsInternal);
 
 			return funcResult;
 		}
 
 		/// <summary>
-		/// Use this function to tweak incoming audio options per room.
+		/// Use this function to remove a user that was added with <see cref="RegisterPlatformUser" />.
 		/// 
-		/// @note Due to internal implementation details, this function requires that you first register to any notification for room
+		/// This function is only necessary for some platforms.
+		/// </summary>
+		/// <param name="options">structure containing the parameters for the operation</param>
+		/// <param name="clientData">Arbitrary data that is passed back in the CompletionDelegate</param>
+		/// <param name="completionDelegate">The callback to be fired when the operation completes, either successfully or in error</param>
+		/// <returns>
+		/// <see cref="Result.Success" /> if the user was successfully unregistered
+		/// <see cref="Result.InvalidParameters" /> if any of the parameters are incorrect
+		/// <see cref="Result.UnexpectedError" /> otherwise
+		/// </returns>
+		public void UnregisterPlatformUser(ref UnregisterPlatformUserOptions options, object clientData, OnUnregisterPlatformUserCallback completionDelegate)
+		{
+			UnregisterPlatformUserOptionsInternal optionsInternal = new UnregisterPlatformUserOptionsInternal();
+			optionsInternal.Set(ref options);
+
+			var clientDataAddress = System.IntPtr.Zero;
+
+			var completionDelegateInternal = new OnUnregisterPlatformUserCallbackInternal(OnUnregisterPlatformUserCallbackInternalImplementation);
+			Helper.AddCallback(out clientDataAddress, clientData, completionDelegate, completionDelegateInternal);
+
+			Bindings.EOS_RTCAudio_UnregisterPlatformUser(InnerHandle, ref optionsInternal, clientDataAddress, completionDelegateInternal);
+
+			Helper.Dispose(ref optionsInternal);
+		}
+
+		/// <summary>
+		/// Use this function to change participant audio volume for a room.
+		/// Due to internal implementation details, this function requires that you first register to any notification for room
 		/// </summary>
 		/// <param name="options">structure containing the parameters for the operation.</param>
 		/// <param name="clientData">Arbitrary data that is passed back in the CompletionDelegate</param>
@@ -591,25 +962,78 @@ namespace Epic.OnlineServices.RTCAudio
 		/// <see cref="Result.InvalidParameters" /> if any of the parameters are incorrect
 		/// <see cref="Result.NotFound" /> if either the local user or specified participant are not in the room
 		/// </returns>
-		public void UpdateReceiving(UpdateReceivingOptions options, object clientData, OnUpdateReceivingCallback completionDelegate)
+		public void UpdateParticipantVolume(ref UpdateParticipantVolumeOptions options, object clientData, OnUpdateParticipantVolumeCallback completionDelegate)
 		{
-			var optionsAddress = System.IntPtr.Zero;
-			Helper.TryMarshalSet<UpdateReceivingOptionsInternal, UpdateReceivingOptions>(ref optionsAddress, options);
+			UpdateParticipantVolumeOptionsInternal optionsInternal = new UpdateParticipantVolumeOptionsInternal();
+			optionsInternal.Set(ref options);
+
+			var clientDataAddress = System.IntPtr.Zero;
+
+			var completionDelegateInternal = new OnUpdateParticipantVolumeCallbackInternal(OnUpdateParticipantVolumeCallbackInternalImplementation);
+			Helper.AddCallback(out clientDataAddress, clientData, completionDelegate, completionDelegateInternal);
+
+			Bindings.EOS_RTCAudio_UpdateParticipantVolume(InnerHandle, ref optionsInternal, clientDataAddress, completionDelegateInternal);
+
+			Helper.Dispose(ref optionsInternal);
+		}
+
+		/// <summary>
+		/// Use this function to tweak incoming audio options for a room.
+		/// Due to internal implementation details, this function requires that you first register to any notification for room
+		/// </summary>
+		/// <param name="options">structure containing the parameters for the operation.</param>
+		/// <param name="clientData">Arbitrary data that is passed back in the CompletionDelegate</param>
+		/// <param name="completionDelegate">The callback to be fired when the operation completes, either successfully or in error</param>
+		/// <returns>
+		/// <see cref="Result.Success" /> if the operation succeeded
+		/// <see cref="Result.InvalidParameters" /> if any of the parameters are incorrect
+		/// <see cref="Result.NotFound" /> if either the local user or specified participant are not in the room
+		/// </returns>
+		public void UpdateReceiving(ref UpdateReceivingOptions options, object clientData, OnUpdateReceivingCallback completionDelegate)
+		{
+			UpdateReceivingOptionsInternal optionsInternal = new UpdateReceivingOptionsInternal();
+			optionsInternal.Set(ref options);
 
 			var clientDataAddress = System.IntPtr.Zero;
 
 			var completionDelegateInternal = new OnUpdateReceivingCallbackInternal(OnUpdateReceivingCallbackInternalImplementation);
-			Helper.AddCallback(ref clientDataAddress, clientData, completionDelegate, completionDelegateInternal);
+			Helper.AddCallback(out clientDataAddress, clientData, completionDelegate, completionDelegateInternal);
 
-			Bindings.EOS_RTCAudio_UpdateReceiving(InnerHandle, optionsAddress, clientDataAddress, completionDelegateInternal);
+			Bindings.EOS_RTCAudio_UpdateReceiving(InnerHandle, ref optionsInternal, clientDataAddress, completionDelegateInternal);
 
-			Helper.TryMarshalDispose(ref optionsAddress);
+			Helper.Dispose(ref optionsInternal);
 		}
 
 		/// <summary>
-		/// Use this function to tweak outgoing audio options per room.
-		/// 
-		/// @note Due to internal implementation details, this function requires that you first register to any notification for room
+		/// Use this function to change incoming audio volume for a room.
+		/// Due to internal implementation details, this function requires that you first register to any notification for room
+		/// </summary>
+		/// <param name="options">structure containing the parameters for the operation.</param>
+		/// <param name="clientData">Arbitrary data that is passed back in the CompletionDelegate</param>
+		/// <param name="completionDelegate">The callback to be fired when the operation completes, either successfully or on error</param>
+		/// <returns>
+		/// <see cref="Result.Success" /> if the operation succeeded
+		/// <see cref="Result.InvalidParameters" /> if any of the parameters are incorrect
+		/// <see cref="Result.NotFound" /> if the local user is not in the room
+		/// </returns>
+		public void UpdateReceivingVolume(ref UpdateReceivingVolumeOptions options, object clientData, OnUpdateReceivingVolumeCallback completionDelegate)
+		{
+			UpdateReceivingVolumeOptionsInternal optionsInternal = new UpdateReceivingVolumeOptionsInternal();
+			optionsInternal.Set(ref options);
+
+			var clientDataAddress = System.IntPtr.Zero;
+
+			var completionDelegateInternal = new OnUpdateReceivingVolumeCallbackInternal(OnUpdateReceivingVolumeCallbackInternalImplementation);
+			Helper.AddCallback(out clientDataAddress, clientData, completionDelegate, completionDelegateInternal);
+
+			Bindings.EOS_RTCAudio_UpdateReceivingVolume(InnerHandle, ref optionsInternal, clientDataAddress, completionDelegateInternal);
+
+			Helper.Dispose(ref optionsInternal);
+		}
+
+		/// <summary>
+		/// Use this function to tweak outgoing audio options for a room.
+		/// Due to internal implementation details, this function requires that you first register to any notification for room
 		/// </summary>
 		/// <param name="options">structure containing the parameters for the operation.</param>
 		/// <param name="clientData">Arbitrary data that is passed back in the CompletionDelegate</param>
@@ -619,106 +1043,232 @@ namespace Epic.OnlineServices.RTCAudio
 		/// <see cref="Result.InvalidParameters" /> if any of the parameters are incorrect
 		/// <see cref="Result.NotFound" /> if the local user is not in the room
 		/// </returns>
-		public void UpdateSending(UpdateSendingOptions options, object clientData, OnUpdateSendingCallback completionDelegate)
+		public void UpdateSending(ref UpdateSendingOptions options, object clientData, OnUpdateSendingCallback completionDelegate)
 		{
-			var optionsAddress = System.IntPtr.Zero;
-			Helper.TryMarshalSet<UpdateSendingOptionsInternal, UpdateSendingOptions>(ref optionsAddress, options);
+			UpdateSendingOptionsInternal optionsInternal = new UpdateSendingOptionsInternal();
+			optionsInternal.Set(ref options);
 
 			var clientDataAddress = System.IntPtr.Zero;
 
 			var completionDelegateInternal = new OnUpdateSendingCallbackInternal(OnUpdateSendingCallbackInternalImplementation);
-			Helper.AddCallback(ref clientDataAddress, clientData, completionDelegate, completionDelegateInternal);
+			Helper.AddCallback(out clientDataAddress, clientData, completionDelegate, completionDelegateInternal);
 
-			Bindings.EOS_RTCAudio_UpdateSending(InnerHandle, optionsAddress, clientDataAddress, completionDelegateInternal);
+			Bindings.EOS_RTCAudio_UpdateSending(InnerHandle, ref optionsInternal, clientDataAddress, completionDelegateInternal);
 
-			Helper.TryMarshalDispose(ref optionsAddress);
+			Helper.Dispose(ref optionsInternal);
+		}
+
+		/// <summary>
+		/// Use this function to change outgoing audio volume for a room.
+		/// Due to internal implementation details, this function requires that you first register to any notification for room
+		/// </summary>
+		/// <param name="options">structure containing the parameters for the operation.</param>
+		/// <param name="clientData">Arbitrary data that is passed back in the CompletionDelegate</param>
+		/// <param name="completionDelegate">The callback to be fired when the operation completes, either successfully or in error</param>
+		/// <returns>
+		/// <see cref="Result.Success" /> if the operation succeeded
+		/// <see cref="Result.InvalidParameters" /> if any of the parameters are incorrect
+		/// <see cref="Result.NotFound" /> if the local user is not in the room
+		/// </returns>
+		public void UpdateSendingVolume(ref UpdateSendingVolumeOptions options, object clientData, OnUpdateSendingVolumeCallback completionDelegate)
+		{
+			UpdateSendingVolumeOptionsInternal optionsInternal = new UpdateSendingVolumeOptionsInternal();
+			optionsInternal.Set(ref options);
+
+			var clientDataAddress = System.IntPtr.Zero;
+
+			var completionDelegateInternal = new OnUpdateSendingVolumeCallbackInternal(OnUpdateSendingVolumeCallbackInternalImplementation);
+			Helper.AddCallback(out clientDataAddress, clientData, completionDelegate, completionDelegateInternal);
+
+			Bindings.EOS_RTCAudio_UpdateSendingVolume(InnerHandle, ref optionsInternal, clientDataAddress, completionDelegateInternal);
+
+			Helper.Dispose(ref optionsInternal);
 		}
 
 		[MonoPInvokeCallback(typeof(OnAudioBeforeRenderCallbackInternal))]
-		internal static void OnAudioBeforeRenderCallbackInternalImplementation(System.IntPtr data)
+		internal static void OnAudioBeforeRenderCallbackInternalImplementation(ref AudioBeforeRenderCallbackInfoInternal data)
 		{
 			OnAudioBeforeRenderCallback callback;
 			AudioBeforeRenderCallbackInfo callbackInfo;
-			if (Helper.TryGetAndRemoveCallback<OnAudioBeforeRenderCallback, AudioBeforeRenderCallbackInfoInternal, AudioBeforeRenderCallbackInfo>(data, out callback, out callbackInfo))
+			if (Helper.TryGetCallback(ref data, out callback, out callbackInfo))
 			{
-				callback(callbackInfo);
+				callback(ref callbackInfo);
 			}
 		}
 
 		[MonoPInvokeCallback(typeof(OnAudioBeforeSendCallbackInternal))]
-		internal static void OnAudioBeforeSendCallbackInternalImplementation(System.IntPtr data)
+		internal static void OnAudioBeforeSendCallbackInternalImplementation(ref AudioBeforeSendCallbackInfoInternal data)
 		{
 			OnAudioBeforeSendCallback callback;
 			AudioBeforeSendCallbackInfo callbackInfo;
-			if (Helper.TryGetAndRemoveCallback<OnAudioBeforeSendCallback, AudioBeforeSendCallbackInfoInternal, AudioBeforeSendCallbackInfo>(data, out callback, out callbackInfo))
+			if (Helper.TryGetCallback(ref data, out callback, out callbackInfo))
 			{
-				callback(callbackInfo);
+				callback(ref callbackInfo);
 			}
 		}
 
 		[MonoPInvokeCallback(typeof(OnAudioDevicesChangedCallbackInternal))]
-		internal static void OnAudioDevicesChangedCallbackInternalImplementation(System.IntPtr data)
+		internal static void OnAudioDevicesChangedCallbackInternalImplementation(ref AudioDevicesChangedCallbackInfoInternal data)
 		{
 			OnAudioDevicesChangedCallback callback;
 			AudioDevicesChangedCallbackInfo callbackInfo;
-			if (Helper.TryGetAndRemoveCallback<OnAudioDevicesChangedCallback, AudioDevicesChangedCallbackInfoInternal, AudioDevicesChangedCallbackInfo>(data, out callback, out callbackInfo))
+			if (Helper.TryGetCallback(ref data, out callback, out callbackInfo))
 			{
-				callback(callbackInfo);
+				callback(ref callbackInfo);
 			}
 		}
 
 		[MonoPInvokeCallback(typeof(OnAudioInputStateCallbackInternal))]
-		internal static void OnAudioInputStateCallbackInternalImplementation(System.IntPtr data)
+		internal static void OnAudioInputStateCallbackInternalImplementation(ref AudioInputStateCallbackInfoInternal data)
 		{
 			OnAudioInputStateCallback callback;
 			AudioInputStateCallbackInfo callbackInfo;
-			if (Helper.TryGetAndRemoveCallback<OnAudioInputStateCallback, AudioInputStateCallbackInfoInternal, AudioInputStateCallbackInfo>(data, out callback, out callbackInfo))
+			if (Helper.TryGetCallback(ref data, out callback, out callbackInfo))
 			{
-				callback(callbackInfo);
+				callback(ref callbackInfo);
 			}
 		}
 
 		[MonoPInvokeCallback(typeof(OnAudioOutputStateCallbackInternal))]
-		internal static void OnAudioOutputStateCallbackInternalImplementation(System.IntPtr data)
+		internal static void OnAudioOutputStateCallbackInternalImplementation(ref AudioOutputStateCallbackInfoInternal data)
 		{
 			OnAudioOutputStateCallback callback;
 			AudioOutputStateCallbackInfo callbackInfo;
-			if (Helper.TryGetAndRemoveCallback<OnAudioOutputStateCallback, AudioOutputStateCallbackInfoInternal, AudioOutputStateCallbackInfo>(data, out callback, out callbackInfo))
+			if (Helper.TryGetCallback(ref data, out callback, out callbackInfo))
 			{
-				callback(callbackInfo);
+				callback(ref callbackInfo);
 			}
 		}
 
 		[MonoPInvokeCallback(typeof(OnParticipantUpdatedCallbackInternal))]
-		internal static void OnParticipantUpdatedCallbackInternalImplementation(System.IntPtr data)
+		internal static void OnParticipantUpdatedCallbackInternalImplementation(ref ParticipantUpdatedCallbackInfoInternal data)
 		{
 			OnParticipantUpdatedCallback callback;
 			ParticipantUpdatedCallbackInfo callbackInfo;
-			if (Helper.TryGetAndRemoveCallback<OnParticipantUpdatedCallback, ParticipantUpdatedCallbackInfoInternal, ParticipantUpdatedCallbackInfo>(data, out callback, out callbackInfo))
+			if (Helper.TryGetCallback(ref data, out callback, out callbackInfo))
 			{
-				callback(callbackInfo);
+				callback(ref callbackInfo);
+			}
+		}
+
+		[MonoPInvokeCallback(typeof(OnQueryInputDevicesInformationCallbackInternal))]
+		internal static void OnQueryInputDevicesInformationCallbackInternalImplementation(ref OnQueryInputDevicesInformationCallbackInfoInternal data)
+		{
+			OnQueryInputDevicesInformationCallback callback;
+			OnQueryInputDevicesInformationCallbackInfo callbackInfo;
+			if (Helper.TryGetAndRemoveCallback(ref data, out callback, out callbackInfo))
+			{
+				callback(ref callbackInfo);
+			}
+		}
+
+		[MonoPInvokeCallback(typeof(OnQueryOutputDevicesInformationCallbackInternal))]
+		internal static void OnQueryOutputDevicesInformationCallbackInternalImplementation(ref OnQueryOutputDevicesInformationCallbackInfoInternal data)
+		{
+			OnQueryOutputDevicesInformationCallback callback;
+			OnQueryOutputDevicesInformationCallbackInfo callbackInfo;
+			if (Helper.TryGetAndRemoveCallback(ref data, out callback, out callbackInfo))
+			{
+				callback(ref callbackInfo);
+			}
+		}
+
+		[MonoPInvokeCallback(typeof(OnRegisterPlatformUserCallbackInternal))]
+		internal static void OnRegisterPlatformUserCallbackInternalImplementation(ref OnRegisterPlatformUserCallbackInfoInternal data)
+		{
+			OnRegisterPlatformUserCallback callback;
+			OnRegisterPlatformUserCallbackInfo callbackInfo;
+			if (Helper.TryGetAndRemoveCallback(ref data, out callback, out callbackInfo))
+			{
+				callback(ref callbackInfo);
+			}
+		}
+
+		[MonoPInvokeCallback(typeof(OnSetInputDeviceSettingsCallbackInternal))]
+		internal static void OnSetInputDeviceSettingsCallbackInternalImplementation(ref OnSetInputDeviceSettingsCallbackInfoInternal data)
+		{
+			OnSetInputDeviceSettingsCallback callback;
+			OnSetInputDeviceSettingsCallbackInfo callbackInfo;
+			if (Helper.TryGetAndRemoveCallback(ref data, out callback, out callbackInfo))
+			{
+				callback(ref callbackInfo);
+			}
+		}
+
+		[MonoPInvokeCallback(typeof(OnSetOutputDeviceSettingsCallbackInternal))]
+		internal static void OnSetOutputDeviceSettingsCallbackInternalImplementation(ref OnSetOutputDeviceSettingsCallbackInfoInternal data)
+		{
+			OnSetOutputDeviceSettingsCallback callback;
+			OnSetOutputDeviceSettingsCallbackInfo callbackInfo;
+			if (Helper.TryGetAndRemoveCallback(ref data, out callback, out callbackInfo))
+			{
+				callback(ref callbackInfo);
+			}
+		}
+
+		[MonoPInvokeCallback(typeof(OnUnregisterPlatformUserCallbackInternal))]
+		internal static void OnUnregisterPlatformUserCallbackInternalImplementation(ref OnUnregisterPlatformUserCallbackInfoInternal data)
+		{
+			OnUnregisterPlatformUserCallback callback;
+			OnUnregisterPlatformUserCallbackInfo callbackInfo;
+			if (Helper.TryGetAndRemoveCallback(ref data, out callback, out callbackInfo))
+			{
+				callback(ref callbackInfo);
+			}
+		}
+
+		[MonoPInvokeCallback(typeof(OnUpdateParticipantVolumeCallbackInternal))]
+		internal static void OnUpdateParticipantVolumeCallbackInternalImplementation(ref UpdateParticipantVolumeCallbackInfoInternal data)
+		{
+			OnUpdateParticipantVolumeCallback callback;
+			UpdateParticipantVolumeCallbackInfo callbackInfo;
+			if (Helper.TryGetAndRemoveCallback(ref data, out callback, out callbackInfo))
+			{
+				callback(ref callbackInfo);
 			}
 		}
 
 		[MonoPInvokeCallback(typeof(OnUpdateReceivingCallbackInternal))]
-		internal static void OnUpdateReceivingCallbackInternalImplementation(System.IntPtr data)
+		internal static void OnUpdateReceivingCallbackInternalImplementation(ref UpdateReceivingCallbackInfoInternal data)
 		{
 			OnUpdateReceivingCallback callback;
 			UpdateReceivingCallbackInfo callbackInfo;
-			if (Helper.TryGetAndRemoveCallback<OnUpdateReceivingCallback, UpdateReceivingCallbackInfoInternal, UpdateReceivingCallbackInfo>(data, out callback, out callbackInfo))
+			if (Helper.TryGetAndRemoveCallback(ref data, out callback, out callbackInfo))
 			{
-				callback(callbackInfo);
+				callback(ref callbackInfo);
+			}
+		}
+
+		[MonoPInvokeCallback(typeof(OnUpdateReceivingVolumeCallbackInternal))]
+		internal static void OnUpdateReceivingVolumeCallbackInternalImplementation(ref UpdateReceivingVolumeCallbackInfoInternal data)
+		{
+			OnUpdateReceivingVolumeCallback callback;
+			UpdateReceivingVolumeCallbackInfo callbackInfo;
+			if (Helper.TryGetAndRemoveCallback(ref data, out callback, out callbackInfo))
+			{
+				callback(ref callbackInfo);
 			}
 		}
 
 		[MonoPInvokeCallback(typeof(OnUpdateSendingCallbackInternal))]
-		internal static void OnUpdateSendingCallbackInternalImplementation(System.IntPtr data)
+		internal static void OnUpdateSendingCallbackInternalImplementation(ref UpdateSendingCallbackInfoInternal data)
 		{
 			OnUpdateSendingCallback callback;
 			UpdateSendingCallbackInfo callbackInfo;
-			if (Helper.TryGetAndRemoveCallback<OnUpdateSendingCallback, UpdateSendingCallbackInfoInternal, UpdateSendingCallbackInfo>(data, out callback, out callbackInfo))
+			if (Helper.TryGetAndRemoveCallback(ref data, out callback, out callbackInfo))
 			{
-				callback(callbackInfo);
+				callback(ref callbackInfo);
+			}
+		}
+
+		[MonoPInvokeCallback(typeof(OnUpdateSendingVolumeCallbackInternal))]
+		internal static void OnUpdateSendingVolumeCallbackInternalImplementation(ref UpdateSendingVolumeCallbackInfoInternal data)
+		{
+			OnUpdateSendingVolumeCallback callback;
+			UpdateSendingVolumeCallbackInfo callbackInfo;
+			if (Helper.TryGetAndRemoveCallback(ref data, out callback, out callbackInfo))
+			{
+				callback(ref callbackInfo);
 			}
 		}
 	}

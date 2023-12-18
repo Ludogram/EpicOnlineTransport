@@ -6,7 +6,7 @@ namespace Epic.OnlineServices.Platform
 	/// <summary>
 	/// Options for initializing the Epic Online Services SDK.
 	/// </summary>
-	public class InitializeOptions
+	public struct InitializeOptions
 	{
 		/// <summary>
 		/// A custom memory allocator, if desired.
@@ -26,18 +26,25 @@ namespace Epic.OnlineServices.Platform
 		/// <summary>
 		/// The name of the product using the Epic Online Services SDK.
 		/// 
-		/// The name string is required to be non-empty and at maximum of 64 characters long.
+		/// The name string is required to be non-empty and at maximum of <see cref="PlatformInterface.InitializeoptionsProductnameMaxLength" /> bytes long.
 		/// The string buffer can consist of the following characters:
 		/// A-Z, a-z, 0-9, dot, underscore, space, exclamation mark, question mark, and sign, hyphen, parenthesis, plus, minus, colon.
 		/// </summary>
-		public string ProductName { get; set; }
+		public Utf8String ProductName { get; set; }
 
 		/// <summary>
 		/// Product version of the running application.
 		/// 
-		/// The name string has same requirements as the ProductName string.
+		/// The version string is required to be non-empty and at maximum of <see cref="PlatformInterface.InitializeoptionsProductversionMaxLength" /> bytes long.
+		/// The string buffer can consist of the following characters:
+		/// A-Z, a-z, 0-9, dot, underscore, space, exclamation mark, question mark, and sign, hyphen, parenthesis, plus, minus, colon.
 		/// </summary>
-		public string ProductVersion { get; set; }
+		public Utf8String ProductVersion { get; set; }
+
+		/// <summary>
+		/// A reserved field that should always be nulled.
+		/// </summary>
+		public System.IntPtr Reserved { get; set; }
 
 		/// <summary>
 		/// This field is for system specific initialization if any.
@@ -50,11 +57,11 @@ namespace Epic.OnlineServices.Platform
 		/// <summary>
 		/// The thread affinity override values for each category of thread.
 		/// </summary>
-		public InitializeThreadAffinity OverrideThreadAffinity { get; set; }
+		public InitializeThreadAffinity? OverrideThreadAffinity { get; set; }
 	}
 
 	[System.Runtime.InteropServices.StructLayout(System.Runtime.InteropServices.LayoutKind.Sequential, Pack = 8)]
-	internal struct InitializeOptionsInternal : ISettable, System.IDisposable
+	internal struct InitializeOptionsInternal : ISettable<InitializeOptions>, System.IDisposable
 	{
 		private int m_ApiVersion;
 		private System.IntPtr m_AllocateMemoryFunction;
@@ -90,19 +97,27 @@ namespace Epic.OnlineServices.Platform
 			}
 		}
 
-		public string ProductName
+		public Utf8String ProductName
 		{
 			set
 			{
-				Helper.TryMarshalSet(ref m_ProductName, value);
+				Helper.Set(value, ref m_ProductName);
 			}
 		}
 
-		public string ProductVersion
+		public Utf8String ProductVersion
 		{
 			set
 			{
-				Helper.TryMarshalSet(ref m_ProductVersion, value);
+				Helper.Set(value, ref m_ProductVersion);
+			}
+		}
+
+		public System.IntPtr Reserved
+		{
+			set
+			{
+				m_Reserved = value;
 			}
 		}
 
@@ -114,48 +129,54 @@ namespace Epic.OnlineServices.Platform
 			}
 		}
 
-		public InitializeThreadAffinity OverrideThreadAffinity
+		public InitializeThreadAffinity? OverrideThreadAffinity
 		{
 			set
 			{
-				Helper.TryMarshalSet<InitializeThreadAffinityInternal, InitializeThreadAffinity>(ref m_OverrideThreadAffinity, value);
+				Helper.Set<InitializeThreadAffinity, InitializeThreadAffinityInternal>(ref value, ref m_OverrideThreadAffinity);
 			}
 		}
 
-		public void Set(InitializeOptions other)
+		public void Set(ref InitializeOptions other)
 		{
-			if (other != null)
+			m_ApiVersion = PlatformInterface.InitializeApiLatest;
+			AllocateMemoryFunction = other.AllocateMemoryFunction;
+			ReallocateMemoryFunction = other.ReallocateMemoryFunction;
+			ReleaseMemoryFunction = other.ReleaseMemoryFunction;
+			ProductName = other.ProductName;
+			ProductVersion = other.ProductVersion;
+			Reserved = other.Reserved;
+			SystemInitializeOptions = other.SystemInitializeOptions;
+			OverrideThreadAffinity = other.OverrideThreadAffinity;
+		}
+
+		public void Set(ref InitializeOptions? other)
+		{
+			if (other.HasValue)
 			{
 				m_ApiVersion = PlatformInterface.InitializeApiLatest;
-				AllocateMemoryFunction = other.AllocateMemoryFunction;
-				ReallocateMemoryFunction = other.ReallocateMemoryFunction;
-				ReleaseMemoryFunction = other.ReleaseMemoryFunction;
-				ProductName = other.ProductName;
-				ProductVersion = other.ProductVersion;
-				int[] reservedData = new int[] { 1, 1 };
-				System.IntPtr reservedDataAddress = System.IntPtr.Zero;
-				Helper.TryMarshalSet(ref reservedDataAddress, reservedData);
-				m_Reserved = reservedDataAddress;
-				SystemInitializeOptions = other.SystemInitializeOptions;
-				OverrideThreadAffinity = other.OverrideThreadAffinity;
+				AllocateMemoryFunction = other.Value.AllocateMemoryFunction;
+				ReallocateMemoryFunction = other.Value.ReallocateMemoryFunction;
+				ReleaseMemoryFunction = other.Value.ReleaseMemoryFunction;
+				ProductName = other.Value.ProductName;
+				ProductVersion = other.Value.ProductVersion;
+				m_Reserved = other.Value.Reserved;
+				if (m_Reserved == System.IntPtr.Zero) Helper.Set(new int[] { 1, 1 }, ref m_Reserved);
+				SystemInitializeOptions = other.Value.SystemInitializeOptions;
+				OverrideThreadAffinity = other.Value.OverrideThreadAffinity;
 			}
-		}
-
-		public void Set(object other)
-		{
-			Set(other as InitializeOptions);
 		}
 
 		public void Dispose()
 		{
-			Helper.TryMarshalDispose(ref m_AllocateMemoryFunction);
-			Helper.TryMarshalDispose(ref m_ReallocateMemoryFunction);
-			Helper.TryMarshalDispose(ref m_ReleaseMemoryFunction);
-			Helper.TryMarshalDispose(ref m_ProductName);
-			Helper.TryMarshalDispose(ref m_ProductVersion);
-			Helper.TryMarshalDispose(ref m_Reserved);
-			Helper.TryMarshalDispose(ref m_SystemInitializeOptions);
-			Helper.TryMarshalDispose(ref m_OverrideThreadAffinity);
+			Helper.Dispose(ref m_AllocateMemoryFunction);
+			Helper.Dispose(ref m_ReallocateMemoryFunction);
+			Helper.Dispose(ref m_ReleaseMemoryFunction);
+			Helper.Dispose(ref m_ProductName);
+			Helper.Dispose(ref m_ProductVersion);
+			Helper.Dispose(ref m_Reserved);
+			Helper.Dispose(ref m_SystemInitializeOptions);
+			Helper.Dispose(ref m_OverrideThreadAffinity);
 		}
 	}
 }

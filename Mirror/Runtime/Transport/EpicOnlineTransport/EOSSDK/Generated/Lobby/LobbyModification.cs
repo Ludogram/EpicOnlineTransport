@@ -16,12 +16,12 @@ namespace Epic.OnlineServices.Lobby
 		/// <summary>
 		/// The most recent version of the <see cref="AddAttribute" /> API.
 		/// </summary>
-		public const int LobbymodificationAddattributeApiLatest = 1;
+		public const int LobbymodificationAddattributeApiLatest = 2;
 
 		/// <summary>
 		/// The most recent version of the <see cref="AddMemberAttribute" /> API.
 		/// </summary>
-		public const int LobbymodificationAddmemberattributeApiLatest = 1;
+		public const int LobbymodificationAddmemberattributeApiLatest = 2;
 
 		/// <summary>
 		/// Maximum length of the name of the attribute associated with the lobby
@@ -42,6 +42,11 @@ namespace Epic.OnlineServices.Lobby
 		/// The most recent version of the <see cref="RemoveMemberAttribute" /> API.
 		/// </summary>
 		public const int LobbymodificationRemovememberattributeApiLatest = 1;
+
+		/// <summary>
+		/// The most recent version of the <see cref="SetAllowedPlatformIds" /> API.
+		/// </summary>
+		public const int LobbymodificationSetallowedplatformidsApiLatest = 1;
 
 		/// <summary>
 		/// The most recent version of the <see cref="SetBucketId" /> API.
@@ -74,14 +79,14 @@ namespace Epic.OnlineServices.Lobby
 		/// <see cref="Result.InvalidParameters" /> if the attribute is missing information or otherwise invalid
 		/// <see cref="Result.IncompatibleVersion" /> if the API version passed in is incorrect
 		/// </returns>
-		public Result AddAttribute(LobbyModificationAddAttributeOptions options)
+		public Result AddAttribute(ref LobbyModificationAddAttributeOptions options)
 		{
-			var optionsAddress = System.IntPtr.Zero;
-			Helper.TryMarshalSet<LobbyModificationAddAttributeOptionsInternal, LobbyModificationAddAttributeOptions>(ref optionsAddress, options);
+			LobbyModificationAddAttributeOptionsInternal optionsInternal = new LobbyModificationAddAttributeOptionsInternal();
+			optionsInternal.Set(ref options);
 
-			var funcResult = Bindings.EOS_LobbyModification_AddAttribute(InnerHandle, optionsAddress);
+			var funcResult = Bindings.EOS_LobbyModification_AddAttribute(InnerHandle, ref optionsInternal);
 
-			Helper.TryMarshalDispose(ref optionsAddress);
+			Helper.Dispose(ref optionsInternal);
 
 			return funcResult;
 		}
@@ -96,14 +101,14 @@ namespace Epic.OnlineServices.Lobby
 		/// <see cref="Result.InvalidParameters" /> if the attribute is missing information or otherwise invalid
 		/// <see cref="Result.IncompatibleVersion" /> if the API version passed in is incorrect
 		/// </returns>
-		public Result AddMemberAttribute(LobbyModificationAddMemberAttributeOptions options)
+		public Result AddMemberAttribute(ref LobbyModificationAddMemberAttributeOptions options)
 		{
-			var optionsAddress = System.IntPtr.Zero;
-			Helper.TryMarshalSet<LobbyModificationAddMemberAttributeOptionsInternal, LobbyModificationAddMemberAttributeOptions>(ref optionsAddress, options);
+			LobbyModificationAddMemberAttributeOptionsInternal optionsInternal = new LobbyModificationAddMemberAttributeOptionsInternal();
+			optionsInternal.Set(ref options);
 
-			var funcResult = Bindings.EOS_LobbyModification_AddMemberAttribute(InnerHandle, optionsAddress);
+			var funcResult = Bindings.EOS_LobbyModification_AddMemberAttribute(InnerHandle, ref optionsInternal);
 
-			Helper.TryMarshalDispose(ref optionsAddress);
+			Helper.Dispose(ref optionsInternal);
 
 			return funcResult;
 		}
@@ -122,14 +127,14 @@ namespace Epic.OnlineServices.Lobby
 		/// <see cref="Result.InvalidParameters" /> if the key is null or empty
 		/// <see cref="Result.IncompatibleVersion" /> if the API version passed in is incorrect
 		/// </returns>
-		public Result RemoveAttribute(LobbyModificationRemoveAttributeOptions options)
+		public Result RemoveAttribute(ref LobbyModificationRemoveAttributeOptions options)
 		{
-			var optionsAddress = System.IntPtr.Zero;
-			Helper.TryMarshalSet<LobbyModificationRemoveAttributeOptionsInternal, LobbyModificationRemoveAttributeOptions>(ref optionsAddress, options);
+			LobbyModificationRemoveAttributeOptionsInternal optionsInternal = new LobbyModificationRemoveAttributeOptionsInternal();
+			optionsInternal.Set(ref options);
 
-			var funcResult = Bindings.EOS_LobbyModification_RemoveAttribute(InnerHandle, optionsAddress);
+			var funcResult = Bindings.EOS_LobbyModification_RemoveAttribute(InnerHandle, ref optionsInternal);
 
-			Helper.TryMarshalDispose(ref optionsAddress);
+			Helper.Dispose(ref optionsInternal);
 
 			return funcResult;
 		}
@@ -143,14 +148,35 @@ namespace Epic.OnlineServices.Lobby
 		/// <see cref="Result.InvalidParameters" /> if the key is null or empty
 		/// <see cref="Result.IncompatibleVersion" /> if the API version passed in is incorrect
 		/// </returns>
-		public Result RemoveMemberAttribute(LobbyModificationRemoveMemberAttributeOptions options)
+		public Result RemoveMemberAttribute(ref LobbyModificationRemoveMemberAttributeOptions options)
 		{
-			var optionsAddress = System.IntPtr.Zero;
-			Helper.TryMarshalSet<LobbyModificationRemoveMemberAttributeOptionsInternal, LobbyModificationRemoveMemberAttributeOptions>(ref optionsAddress, options);
+			LobbyModificationRemoveMemberAttributeOptionsInternal optionsInternal = new LobbyModificationRemoveMemberAttributeOptionsInternal();
+			optionsInternal.Set(ref options);
 
-			var funcResult = Bindings.EOS_LobbyModification_RemoveMemberAttribute(InnerHandle, optionsAddress);
+			var funcResult = Bindings.EOS_LobbyModification_RemoveMemberAttribute(InnerHandle, ref optionsInternal);
 
-			Helper.TryMarshalDispose(ref optionsAddress);
+			Helper.Dispose(ref optionsInternal);
+
+			return funcResult;
+		}
+
+		/// <summary>
+		/// Set the Allowed Platform IDs for the lobby
+		/// </summary>
+		/// <param name="options">Options associated with allowed Platform IDs for this lobby</param>
+		/// <returns>
+		/// <see cref="Result.Success" /> if setting this parameter was successful
+		/// <see cref="Result.IncompatibleVersion" /> if the API version passed in is incorrect
+		/// <see cref="Result.InvalidParameters" /> if the AllowedPlatformIds array is null but the count is 0 or if the count is greater than 0 and the array is null.
+		/// </returns>
+		public Result SetAllowedPlatformIds(ref LobbyModificationSetAllowedPlatformIdsOptions options)
+		{
+			LobbyModificationSetAllowedPlatformIdsOptionsInternal optionsInternal = new LobbyModificationSetAllowedPlatformIdsOptionsInternal();
+			optionsInternal.Set(ref options);
+
+			var funcResult = Bindings.EOS_LobbyModification_SetAllowedPlatformIds(InnerHandle, ref optionsInternal);
+
+			Helper.Dispose(ref optionsInternal);
 
 			return funcResult;
 		}
@@ -166,14 +192,14 @@ namespace Epic.OnlineServices.Lobby
 		/// <see cref="Result.InvalidParameters" /> if the bucket ID is invalid or null
 		/// <see cref="Result.IncompatibleVersion" /> if the API version passed in is incorrect
 		/// </returns>
-		public Result SetBucketId(LobbyModificationSetBucketIdOptions options)
+		public Result SetBucketId(ref LobbyModificationSetBucketIdOptions options)
 		{
-			var optionsAddress = System.IntPtr.Zero;
-			Helper.TryMarshalSet<LobbyModificationSetBucketIdOptionsInternal, LobbyModificationSetBucketIdOptions>(ref optionsAddress, options);
+			LobbyModificationSetBucketIdOptionsInternal optionsInternal = new LobbyModificationSetBucketIdOptionsInternal();
+			optionsInternal.Set(ref options);
 
-			var funcResult = Bindings.EOS_LobbyModification_SetBucketId(InnerHandle, optionsAddress);
+			var funcResult = Bindings.EOS_LobbyModification_SetBucketId(InnerHandle, ref optionsInternal);
 
-			Helper.TryMarshalDispose(ref optionsAddress);
+			Helper.Dispose(ref optionsInternal);
 
 			return funcResult;
 		}
@@ -187,14 +213,14 @@ namespace Epic.OnlineServices.Lobby
 		/// <see cref="Result.Success" /> if setting this parameter was successful
 		/// <see cref="Result.IncompatibleVersion" /> if the API version passed in is incorrect
 		/// </returns>
-		public Result SetInvitesAllowed(LobbyModificationSetInvitesAllowedOptions options)
+		public Result SetInvitesAllowed(ref LobbyModificationSetInvitesAllowedOptions options)
 		{
-			var optionsAddress = System.IntPtr.Zero;
-			Helper.TryMarshalSet<LobbyModificationSetInvitesAllowedOptionsInternal, LobbyModificationSetInvitesAllowedOptions>(ref optionsAddress, options);
+			LobbyModificationSetInvitesAllowedOptionsInternal optionsInternal = new LobbyModificationSetInvitesAllowedOptionsInternal();
+			optionsInternal.Set(ref options);
 
-			var funcResult = Bindings.EOS_LobbyModification_SetInvitesAllowed(InnerHandle, optionsAddress);
+			var funcResult = Bindings.EOS_LobbyModification_SetInvitesAllowed(InnerHandle, ref optionsInternal);
 
-			Helper.TryMarshalDispose(ref optionsAddress);
+			Helper.Dispose(ref optionsInternal);
 
 			return funcResult;
 		}
@@ -208,14 +234,14 @@ namespace Epic.OnlineServices.Lobby
 		/// <see cref="Result.Success" /> if setting this parameter was successful
 		/// <see cref="Result.IncompatibleVersion" /> if the API version passed in is incorrect
 		/// </returns>
-		public Result SetMaxMembers(LobbyModificationSetMaxMembersOptions options)
+		public Result SetMaxMembers(ref LobbyModificationSetMaxMembersOptions options)
 		{
-			var optionsAddress = System.IntPtr.Zero;
-			Helper.TryMarshalSet<LobbyModificationSetMaxMembersOptionsInternal, LobbyModificationSetMaxMembersOptions>(ref optionsAddress, options);
+			LobbyModificationSetMaxMembersOptionsInternal optionsInternal = new LobbyModificationSetMaxMembersOptionsInternal();
+			optionsInternal.Set(ref options);
 
-			var funcResult = Bindings.EOS_LobbyModification_SetMaxMembers(InnerHandle, optionsAddress);
+			var funcResult = Bindings.EOS_LobbyModification_SetMaxMembers(InnerHandle, ref optionsInternal);
 
-			Helper.TryMarshalDispose(ref optionsAddress);
+			Helper.Dispose(ref optionsInternal);
 
 			return funcResult;
 		}
@@ -229,14 +255,14 @@ namespace Epic.OnlineServices.Lobby
 		/// <see cref="Result.Success" /> if setting this parameter was successful
 		/// <see cref="Result.IncompatibleVersion" /> if the API version passed in is incorrect
 		/// </returns>
-		public Result SetPermissionLevel(LobbyModificationSetPermissionLevelOptions options)
+		public Result SetPermissionLevel(ref LobbyModificationSetPermissionLevelOptions options)
 		{
-			var optionsAddress = System.IntPtr.Zero;
-			Helper.TryMarshalSet<LobbyModificationSetPermissionLevelOptionsInternal, LobbyModificationSetPermissionLevelOptions>(ref optionsAddress, options);
+			LobbyModificationSetPermissionLevelOptionsInternal optionsInternal = new LobbyModificationSetPermissionLevelOptionsInternal();
+			optionsInternal.Set(ref options);
 
-			var funcResult = Bindings.EOS_LobbyModification_SetPermissionLevel(InnerHandle, optionsAddress);
+			var funcResult = Bindings.EOS_LobbyModification_SetPermissionLevel(InnerHandle, ref optionsInternal);
 
-			Helper.TryMarshalDispose(ref optionsAddress);
+			Helper.Dispose(ref optionsInternal);
 
 			return funcResult;
 		}

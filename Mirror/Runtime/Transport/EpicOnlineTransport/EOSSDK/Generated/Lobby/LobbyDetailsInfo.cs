@@ -3,12 +3,12 @@
 
 namespace Epic.OnlineServices.Lobby
 {
-	public class LobbyDetailsInfo : ISettable
+	public struct LobbyDetailsInfo
 	{
 		/// <summary>
 		/// Lobby ID
 		/// </summary>
-		public string LobbyId { get; set; }
+		public Utf8String LobbyId { get; set; }
 
 		/// <summary>
 		/// The Product User ID of the current owner of the lobby
@@ -36,9 +36,9 @@ namespace Epic.OnlineServices.Lobby
 		public bool AllowInvites { get; set; }
 
 		/// <summary>
-		/// The main indexed parameter for this lobby, can be any string (ie "Region:GameMode")
+		/// The main indexed parameter for this lobby, can be any string (i.e. "Region:GameMode")
 		/// </summary>
-		public string BucketId { get; set; }
+		public Utf8String BucketId { get; set; }
 
 		/// <summary>
 		/// Is host migration allowed
@@ -50,30 +50,48 @@ namespace Epic.OnlineServices.Lobby
 		/// </summary>
 		public bool RTCRoomEnabled { get; set; }
 
-		internal void Set(LobbyDetailsInfoInternal? other)
-		{
-			if (other != null)
-			{
-				LobbyId = other.Value.LobbyId;
-				LobbyOwnerUserId = other.Value.LobbyOwnerUserId;
-				PermissionLevel = other.Value.PermissionLevel;
-				AvailableSlots = other.Value.AvailableSlots;
-				MaxMembers = other.Value.MaxMembers;
-				AllowInvites = other.Value.AllowInvites;
-				BucketId = other.Value.BucketId;
-				AllowHostMigration = other.Value.AllowHostMigration;
-				RTCRoomEnabled = other.Value.RTCRoomEnabled;
-			}
-		}
+		/// <summary>
+		/// Is <see cref="LobbyInterface.JoinLobbyById" /> allowed
+		/// </summary>
+		public bool AllowJoinById { get; set; }
 
-		public void Set(object other)
+		/// <summary>
+		/// Does rejoining after being kicked require an invite
+		/// </summary>
+		public bool RejoinAfterKickRequiresInvite { get; set; }
+
+		/// <summary>
+		/// If true, this lobby will be associated with the local user's presence information.
+		/// </summary>
+		public bool PresenceEnabled { get; set; }
+
+		/// <summary>
+		/// Array of platform IDs indicating the player platforms allowed to register with the session. Platform IDs are
+		/// found in the EOS header file, e.g. <see cref="Common.OptEpic" />. For some platforms, the value will be in the EOS Platform specific
+		/// header file. If null, the lobby will be unrestricted.
+		/// </summary>
+		public uint[] AllowedPlatformIds { get; set; }
+
+		internal void Set(ref LobbyDetailsInfoInternal other)
 		{
-			Set(other as LobbyDetailsInfoInternal?);
+			LobbyId = other.LobbyId;
+			LobbyOwnerUserId = other.LobbyOwnerUserId;
+			PermissionLevel = other.PermissionLevel;
+			AvailableSlots = other.AvailableSlots;
+			MaxMembers = other.MaxMembers;
+			AllowInvites = other.AllowInvites;
+			BucketId = other.BucketId;
+			AllowHostMigration = other.AllowHostMigration;
+			RTCRoomEnabled = other.RTCRoomEnabled;
+			AllowJoinById = other.AllowJoinById;
+			RejoinAfterKickRequiresInvite = other.RejoinAfterKickRequiresInvite;
+			PresenceEnabled = other.PresenceEnabled;
+			AllowedPlatformIds = other.AllowedPlatformIds;
 		}
 	}
 
 	[System.Runtime.InteropServices.StructLayout(System.Runtime.InteropServices.LayoutKind.Sequential, Pack = 8)]
-	internal struct LobbyDetailsInfoInternal : ISettable, System.IDisposable
+	internal struct LobbyDetailsInfoInternal : IGettable<LobbyDetailsInfo>, ISettable<LobbyDetailsInfo>, System.IDisposable
 	{
 		private int m_ApiVersion;
 		private System.IntPtr m_LobbyId;
@@ -85,19 +103,24 @@ namespace Epic.OnlineServices.Lobby
 		private System.IntPtr m_BucketId;
 		private int m_AllowHostMigration;
 		private int m_RTCRoomEnabled;
+		private int m_AllowJoinById;
+		private int m_RejoinAfterKickRequiresInvite;
+		private int m_PresenceEnabled;
+		private System.IntPtr m_AllowedPlatformIds;
+		private uint m_AllowedPlatformIdsCount;
 
-		public string LobbyId
+		public Utf8String LobbyId
 		{
 			get
 			{
-				string value;
-				Helper.TryMarshalGet(m_LobbyId, out value);
+				Utf8String value;
+				Helper.Get(m_LobbyId, out value);
 				return value;
 			}
 
 			set
 			{
-				Helper.TryMarshalSet(ref m_LobbyId, value);
+				Helper.Set(value, ref m_LobbyId);
 			}
 		}
 
@@ -106,13 +129,13 @@ namespace Epic.OnlineServices.Lobby
 			get
 			{
 				ProductUserId value;
-				Helper.TryMarshalGet(m_LobbyOwnerUserId, out value);
+				Helper.Get(m_LobbyOwnerUserId, out value);
 				return value;
 			}
 
 			set
 			{
-				Helper.TryMarshalSet(ref m_LobbyOwnerUserId, value);
+				Helper.Set(value, ref m_LobbyOwnerUserId);
 			}
 		}
 
@@ -160,28 +183,28 @@ namespace Epic.OnlineServices.Lobby
 			get
 			{
 				bool value;
-				Helper.TryMarshalGet(m_AllowInvites, out value);
+				Helper.Get(m_AllowInvites, out value);
 				return value;
 			}
 
 			set
 			{
-				Helper.TryMarshalSet(ref m_AllowInvites, value);
+				Helper.Set(value, ref m_AllowInvites);
 			}
 		}
 
-		public string BucketId
+		public Utf8String BucketId
 		{
 			get
 			{
-				string value;
-				Helper.TryMarshalGet(m_BucketId, out value);
+				Utf8String value;
+				Helper.Get(m_BucketId, out value);
 				return value;
 			}
 
 			set
 			{
-				Helper.TryMarshalSet(ref m_BucketId, value);
+				Helper.Set(value, ref m_BucketId);
 			}
 		}
 
@@ -190,13 +213,13 @@ namespace Epic.OnlineServices.Lobby
 			get
 			{
 				bool value;
-				Helper.TryMarshalGet(m_AllowHostMigration, out value);
+				Helper.Get(m_AllowHostMigration, out value);
 				return value;
 			}
 
 			set
 			{
-				Helper.TryMarshalSet(ref m_AllowHostMigration, value);
+				Helper.Set(value, ref m_AllowHostMigration);
 			}
 		}
 
@@ -205,43 +228,127 @@ namespace Epic.OnlineServices.Lobby
 			get
 			{
 				bool value;
-				Helper.TryMarshalGet(m_RTCRoomEnabled, out value);
+				Helper.Get(m_RTCRoomEnabled, out value);
 				return value;
 			}
 
 			set
 			{
-				Helper.TryMarshalSet(ref m_RTCRoomEnabled, value);
+				Helper.Set(value, ref m_RTCRoomEnabled);
 			}
 		}
 
-		public void Set(LobbyDetailsInfo other)
+		public bool AllowJoinById
 		{
-			if (other != null)
+			get
+			{
+				bool value;
+				Helper.Get(m_AllowJoinById, out value);
+				return value;
+			}
+
+			set
+			{
+				Helper.Set(value, ref m_AllowJoinById);
+			}
+		}
+
+		public bool RejoinAfterKickRequiresInvite
+		{
+			get
+			{
+				bool value;
+				Helper.Get(m_RejoinAfterKickRequiresInvite, out value);
+				return value;
+			}
+
+			set
+			{
+				Helper.Set(value, ref m_RejoinAfterKickRequiresInvite);
+			}
+		}
+
+		public bool PresenceEnabled
+		{
+			get
+			{
+				bool value;
+				Helper.Get(m_PresenceEnabled, out value);
+				return value;
+			}
+
+			set
+			{
+				Helper.Set(value, ref m_PresenceEnabled);
+			}
+		}
+
+		public uint[] AllowedPlatformIds
+		{
+			get
+			{
+				uint[] value;
+				Helper.Get(m_AllowedPlatformIds, out value, m_AllowedPlatformIdsCount);
+				return value;
+			}
+
+			set
+			{
+				Helper.Set(value, ref m_AllowedPlatformIds, out m_AllowedPlatformIdsCount);
+			}
+		}
+
+		public void Set(ref LobbyDetailsInfo other)
+		{
+			m_ApiVersion = LobbyDetails.LobbydetailsInfoApiLatest;
+			LobbyId = other.LobbyId;
+			LobbyOwnerUserId = other.LobbyOwnerUserId;
+			PermissionLevel = other.PermissionLevel;
+			AvailableSlots = other.AvailableSlots;
+			MaxMembers = other.MaxMembers;
+			AllowInvites = other.AllowInvites;
+			BucketId = other.BucketId;
+			AllowHostMigration = other.AllowHostMigration;
+			RTCRoomEnabled = other.RTCRoomEnabled;
+			AllowJoinById = other.AllowJoinById;
+			RejoinAfterKickRequiresInvite = other.RejoinAfterKickRequiresInvite;
+			PresenceEnabled = other.PresenceEnabled;
+			AllowedPlatformIds = other.AllowedPlatformIds;
+		}
+
+		public void Set(ref LobbyDetailsInfo? other)
+		{
+			if (other.HasValue)
 			{
 				m_ApiVersion = LobbyDetails.LobbydetailsInfoApiLatest;
-				LobbyId = other.LobbyId;
-				LobbyOwnerUserId = other.LobbyOwnerUserId;
-				PermissionLevel = other.PermissionLevel;
-				AvailableSlots = other.AvailableSlots;
-				MaxMembers = other.MaxMembers;
-				AllowInvites = other.AllowInvites;
-				BucketId = other.BucketId;
-				AllowHostMigration = other.AllowHostMigration;
-				RTCRoomEnabled = other.RTCRoomEnabled;
+				LobbyId = other.Value.LobbyId;
+				LobbyOwnerUserId = other.Value.LobbyOwnerUserId;
+				PermissionLevel = other.Value.PermissionLevel;
+				AvailableSlots = other.Value.AvailableSlots;
+				MaxMembers = other.Value.MaxMembers;
+				AllowInvites = other.Value.AllowInvites;
+				BucketId = other.Value.BucketId;
+				AllowHostMigration = other.Value.AllowHostMigration;
+				RTCRoomEnabled = other.Value.RTCRoomEnabled;
+				AllowJoinById = other.Value.AllowJoinById;
+				RejoinAfterKickRequiresInvite = other.Value.RejoinAfterKickRequiresInvite;
+				PresenceEnabled = other.Value.PresenceEnabled;
+				AllowedPlatformIds = other.Value.AllowedPlatformIds;
 			}
-		}
-
-		public void Set(object other)
-		{
-			Set(other as LobbyDetailsInfo);
 		}
 
 		public void Dispose()
 		{
-			Helper.TryMarshalDispose(ref m_LobbyId);
-			Helper.TryMarshalDispose(ref m_LobbyOwnerUserId);
-			Helper.TryMarshalDispose(ref m_BucketId);
+			Helper.Dispose(ref m_LobbyId);
+			Helper.Dispose(ref m_LobbyOwnerUserId);
+			Helper.Dispose(ref m_BucketId);
+			Helper.Dispose(ref m_AllowedPlatformIds);
+		}
+
+		public void Get(out LobbyDetailsInfo output)
+		{
+			output = new LobbyDetailsInfo();
+			output.Set(ref this);
 		}
 	}
 }

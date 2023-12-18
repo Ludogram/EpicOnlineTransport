@@ -16,23 +16,28 @@ namespace Epic.OnlineServices
 	public enum ExternalCredentialType : int
 	{
 		/// <summary>
-		/// Epic Games User Token
+		/// Epic Account Services Token
 		/// 
-		/// Acquired using <see cref="Auth.AuthInterface.CopyUserAuthToken" /> that returns <see cref="Auth.Token" />::AccessToken.
+		/// Using ID Token is preferred, retrieved with <see cref="Auth.AuthInterface.CopyIdToken" /> that returns <see cref="Auth.IdToken.JsonWebToken" />.
+		/// Using Auth Token is supported for backwards compatibility, retrieved with <see cref="Auth.AuthInterface.CopyUserAuthToken" /> that returns <see cref="Auth.Token.AccessToken" />.
 		/// 
 		/// Supported with <see cref="Connect.ConnectInterface.Login" />.
+		/// <seealso cref="Auth.AuthInterface.CopyIdToken" />
+		/// <seealso cref="Auth.AuthInterface.CopyUserAuthToken" />
 		/// </summary>
 		Epic = 0,
 		/// <summary>
 		/// Steam Encrypted App Ticket
 		/// 
 		/// Generated using the ISteamUser::RequestEncryptedAppTicket API of Steamworks SDK.
-		/// For ticket generation parameters, use pDataToInclude(NULL) and cbDataToInclude(0).
+		/// For ticket generation parameters, use pDataToInclude(<see langword="null" />) and cbDataToInclude(0).
 		/// 
-		/// The retrieved App Ticket byte buffer needs to be converted into a hex-encoded UTF-8 string (e.g. "FA87097A..") before passing it to the <see cref="Auth.AuthInterface.Login" /> or <see cref="Connect.ConnectInterface.Login" /> APIs.
+		/// The retrieved App Ticket byte buffer needs to be converted into a hex-encoded UTF-8 string (e.g. "FA87097A..") before passing it to the <see cref="Connect.ConnectInterface.Login" /> API.
 		/// <see cref="Common.ToString" /> can be used for this conversion.
 		/// 
-		/// Supported with <see cref="Auth.AuthInterface.Login" />, <see cref="Connect.ConnectInterface.Login" />.
+		/// Supported with <see cref="Connect.ConnectInterface.Login" />.
+		/// Note that <see cref="SteamAppTicket" /> is deprecated for use with <see cref="Auth.AuthInterface.Login" />. Use <see cref="SteamSessionTicket" /> instead.
+		/// <seealso cref="SteamSessionTicket" />
 		/// </summary>
 		SteamAppTicket = 1,
 		/// <summary>
@@ -63,7 +68,7 @@ namespace Epic.OnlineServices
 		/// GOG Galaxy Encrypted App Ticket
 		/// 
 		/// Generated using the IUser::RequestEncryptedAppTicket API of GOG Galaxy SDK.
-		/// For ticket generation parameters, use data(NULL) and dataSize(0).
+		/// For ticket generation parameters, use data(<see langword="null" />) and dataSize(0).
 		/// 
 		/// The retrieved App Ticket byte buffer needs to be converted into a hex-encoded UTF-8 string (e.g. "FA87097A..") before passing it to the <see cref="Connect.ConnectInterface.Login" /> API.
 		/// For C/C++ API integration, use the <see cref="Common.ToString" /> API for the conversion.
@@ -169,6 +174,49 @@ namespace Epic.OnlineServices
 		/// 
 		/// Supported with <see cref="Connect.ConnectInterface.Login" />.
 		/// </summary>
-		ItchioKey = 15
+		ItchioKey = 15,
+		/// <summary>
+		/// Epic Games ID Token
+		/// 
+		/// Acquired using <see cref="Auth.AuthInterface.CopyIdToken" /> that returns <see cref="Auth.IdToken.JsonWebToken" />.
+		/// 
+		/// Supported with <see cref="Connect.ConnectInterface.Login" />.
+		/// </summary>
+		EpicIdToken = 16,
+		/// <summary>
+		/// Amazon Access Token
+		/// 
+		/// Supported with <see cref="Connect.ConnectInterface.Login" />.
+		/// </summary>
+		AmazonAccessToken = 17,
+		/// <summary>
+		/// Steam Auth Session Ticket
+		/// 
+		/// Generated using the ISteamUser::GetAuthTicketForWebApi API of Steamworks SDK.
+		/// 
+		/// @attention
+		/// The pchIdentity input parameter of GetAuthTicketForWebApi API must be set to a valid non-empty string value.
+		/// The string value used by the game client must match identically to the backend-configured value in EOS Dev Portal.
+		/// The recommended value to use is "epiconlineservices" in lowercase, matching the default value for new Steam identity provider credentials in EOS Dev Portal.
+		/// This identifier is important for security reasons to prevent session hijacking. Applications must use a dedicated unique identity identifier for Session Tickets passed to the EOS SDK APIs.
+		/// Session Tickets using the EOS-assigned identifier must not be used with anything else than the EOS SDK APIs. You must use a different identifier when generating Session Tickets to authenticate with other parties.
+		/// 
+		/// @warning
+		/// To update an already live game to use the new GetAuthTicketForWebApi API instead of the deprecated GetAuthSessionTicket API, follow these steps in this order to prevent breaking the live game for players:
+		/// 1. Update your game client code to use the new ISteamUser::GetAuthTicketForWebApi API.
+		/// 2. Publish the new game client update to end-users.
+		/// 3. Update the existing Steam identity provider credentials entry in EOS Dev Portal to use the same identity string identifier as the game client.
+		/// 
+		/// @example
+		/// SteamUser()->GetAuthTicketForWebApi("epiconlineservices");
+		/// 
+		/// The retrieved Auth Session Ticket byte buffer needs to be converted into a hex-encoded UTF-8 string (e.g. "FA87097A..") before passing it to the <see cref="Auth.AuthInterface.Login" /> or <see cref="Connect.ConnectInterface.Login" /> APIs.
+		/// <see cref="Common.ToString" /> can be used for this conversion.
+		/// 
+		/// Supported with <see cref="Auth.AuthInterface.Login" />, <see cref="Connect.ConnectInterface.Login" />.
+		/// 
+		/// @version 1.15.1+
+		/// </summary>
+		SteamSessionTicket = 18
 	}
 }

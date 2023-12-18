@@ -16,7 +16,7 @@ namespace Epic.OnlineServices.Sessions
 		/// <summary>
 		/// The most recent version of the <see cref="AddAttribute" /> API.
 		/// </summary>
-		public const int SessionmodificationAddattributeApiLatest = 1;
+		public const int SessionmodificationAddattributeApiLatest = 2;
 
 		/// <summary>
 		/// Maximum length of the name of the attribute associated with the session
@@ -42,6 +42,11 @@ namespace Epic.OnlineServices.Sessions
 		/// The most recent version of the <see cref="RemoveAttribute" /> API.
 		/// </summary>
 		public const int SessionmodificationRemoveattributeApiLatest = 1;
+
+		/// <summary>
+		/// The most recent version of the <see cref="SetAllowedPlatformIds" /> API.
+		/// </summary>
+		public const int SessionmodificationSetallowedplatformidsApiLatest = 1;
 
 		/// <summary>
 		/// The most recent version of the <see cref="SetBucketId" /> API.
@@ -84,14 +89,14 @@ namespace Epic.OnlineServices.Sessions
 		/// <see cref="Result.InvalidParameters" /> if the attribution is missing information or otherwise invalid
 		/// <see cref="Result.IncompatibleVersion" /> if the API version passed in is incorrect
 		/// </returns>
-		public Result AddAttribute(SessionModificationAddAttributeOptions options)
+		public Result AddAttribute(ref SessionModificationAddAttributeOptions options)
 		{
-			var optionsAddress = System.IntPtr.Zero;
-			Helper.TryMarshalSet<SessionModificationAddAttributeOptionsInternal, SessionModificationAddAttributeOptions>(ref optionsAddress, options);
+			SessionModificationAddAttributeOptionsInternal optionsInternal = new SessionModificationAddAttributeOptionsInternal();
+			optionsInternal.Set(ref options);
 
-			var funcResult = Bindings.EOS_SessionModification_AddAttribute(InnerHandle, optionsAddress);
+			var funcResult = Bindings.EOS_SessionModification_AddAttribute(InnerHandle, ref optionsInternal);
 
-			Helper.TryMarshalDispose(ref optionsAddress);
+			Helper.Dispose(ref optionsInternal);
 
 			return funcResult;
 		}
@@ -117,14 +122,35 @@ namespace Epic.OnlineServices.Sessions
 		/// <see cref="Result.InvalidParameters" /> if the key is null or empty
 		/// <see cref="Result.IncompatibleVersion" /> if the API version passed in is incorrect
 		/// </returns>
-		public Result RemoveAttribute(SessionModificationRemoveAttributeOptions options)
+		public Result RemoveAttribute(ref SessionModificationRemoveAttributeOptions options)
 		{
-			var optionsAddress = System.IntPtr.Zero;
-			Helper.TryMarshalSet<SessionModificationRemoveAttributeOptionsInternal, SessionModificationRemoveAttributeOptions>(ref optionsAddress, options);
+			SessionModificationRemoveAttributeOptionsInternal optionsInternal = new SessionModificationRemoveAttributeOptionsInternal();
+			optionsInternal.Set(ref options);
 
-			var funcResult = Bindings.EOS_SessionModification_RemoveAttribute(InnerHandle, optionsAddress);
+			var funcResult = Bindings.EOS_SessionModification_RemoveAttribute(InnerHandle, ref optionsInternal);
 
-			Helper.TryMarshalDispose(ref optionsAddress);
+			Helper.Dispose(ref optionsInternal);
+
+			return funcResult;
+		}
+
+		/// <summary>
+		/// Set the Allowed Platform IDs for the session.
+		/// </summary>
+		/// <param name="options">Options associated with allowed Platform IDs for this session.</param>
+		/// <returns>
+		/// <see cref="Result.Success" /> if setting this parameter was successful
+		/// <see cref="Result.IncompatibleVersion" /> if the API version passed in is incorrect
+		/// <see cref="Result.InvalidParameters" /> if the attribution is missing information or otherwise invalid
+		/// </returns>
+		public Result SetAllowedPlatformIds(ref SessionModificationSetAllowedPlatformIdsOptions options)
+		{
+			SessionModificationSetAllowedPlatformIdsOptionsInternal optionsInternal = new SessionModificationSetAllowedPlatformIdsOptionsInternal();
+			optionsInternal.Set(ref options);
+
+			var funcResult = Bindings.EOS_SessionModification_SetAllowedPlatformIds(InnerHandle, ref optionsInternal);
+
+			Helper.Dispose(ref optionsInternal);
 
 			return funcResult;
 		}
@@ -140,14 +166,14 @@ namespace Epic.OnlineServices.Sessions
 		/// <see cref="Result.InvalidParameters" /> if the bucket ID is invalid or null
 		/// <see cref="Result.IncompatibleVersion" /> if the API version passed in is incorrect
 		/// </returns>
-		public Result SetBucketId(SessionModificationSetBucketIdOptions options)
+		public Result SetBucketId(ref SessionModificationSetBucketIdOptions options)
 		{
-			var optionsAddress = System.IntPtr.Zero;
-			Helper.TryMarshalSet<SessionModificationSetBucketIdOptionsInternal, SessionModificationSetBucketIdOptions>(ref optionsAddress, options);
+			SessionModificationSetBucketIdOptionsInternal optionsInternal = new SessionModificationSetBucketIdOptionsInternal();
+			optionsInternal.Set(ref options);
 
-			var funcResult = Bindings.EOS_SessionModification_SetBucketId(InnerHandle, optionsAddress);
+			var funcResult = Bindings.EOS_SessionModification_SetBucketId(InnerHandle, ref optionsInternal);
 
-			Helper.TryMarshalDispose(ref optionsAddress);
+			Helper.Dispose(ref optionsInternal);
 
 			return funcResult;
 		}
@@ -156,8 +182,7 @@ namespace Epic.OnlineServices.Sessions
 		/// Set the host address associated with this session
 		/// Setting this is optional, if the value is not set the SDK will fill the value in from the service.
 		/// It is useful to set if other addressing mechanisms are desired or if LAN addresses are preferred during development
-		/// 
-		/// @note No validation of this value occurs to allow for flexibility in addressing methods
+		/// No validation of this value occurs to allow for flexibility in addressing methods
 		/// </summary>
 		/// <param name="options">Options associated with the host address of the session</param>
 		/// <returns>
@@ -165,14 +190,14 @@ namespace Epic.OnlineServices.Sessions
 		/// <see cref="Result.InvalidParameters" /> if the host ID is an empty string
 		/// <see cref="Result.IncompatibleVersion" /> if the API version passed in is incorrect
 		/// </returns>
-		public Result SetHostAddress(SessionModificationSetHostAddressOptions options)
+		public Result SetHostAddress(ref SessionModificationSetHostAddressOptions options)
 		{
-			var optionsAddress = System.IntPtr.Zero;
-			Helper.TryMarshalSet<SessionModificationSetHostAddressOptionsInternal, SessionModificationSetHostAddressOptions>(ref optionsAddress, options);
+			SessionModificationSetHostAddressOptionsInternal optionsInternal = new SessionModificationSetHostAddressOptionsInternal();
+			optionsInternal.Set(ref options);
 
-			var funcResult = Bindings.EOS_SessionModification_SetHostAddress(InnerHandle, optionsAddress);
+			var funcResult = Bindings.EOS_SessionModification_SetHostAddress(InnerHandle, ref optionsInternal);
 
-			Helper.TryMarshalDispose(ref optionsAddress);
+			Helper.Dispose(ref optionsInternal);
 
 			return funcResult;
 		}
@@ -186,14 +211,14 @@ namespace Epic.OnlineServices.Sessions
 		/// <see cref="Result.Success" /> if setting this parameter was successful
 		/// <see cref="Result.IncompatibleVersion" /> if the API version passed in is incorrect
 		/// </returns>
-		public Result SetInvitesAllowed(SessionModificationSetInvitesAllowedOptions options)
+		public Result SetInvitesAllowed(ref SessionModificationSetInvitesAllowedOptions options)
 		{
-			var optionsAddress = System.IntPtr.Zero;
-			Helper.TryMarshalSet<SessionModificationSetInvitesAllowedOptionsInternal, SessionModificationSetInvitesAllowedOptions>(ref optionsAddress, options);
+			SessionModificationSetInvitesAllowedOptionsInternal optionsInternal = new SessionModificationSetInvitesAllowedOptionsInternal();
+			optionsInternal.Set(ref options);
 
-			var funcResult = Bindings.EOS_SessionModification_SetInvitesAllowed(InnerHandle, optionsAddress);
+			var funcResult = Bindings.EOS_SessionModification_SetInvitesAllowed(InnerHandle, ref optionsInternal);
 
-			Helper.TryMarshalDispose(ref optionsAddress);
+			Helper.Dispose(ref optionsInternal);
 
 			return funcResult;
 		}
@@ -207,14 +232,14 @@ namespace Epic.OnlineServices.Sessions
 		/// <see cref="Result.Success" /> if setting this parameter was successful
 		/// <see cref="Result.IncompatibleVersion" /> if the API version passed in is incorrect
 		/// </returns>
-		public Result SetJoinInProgressAllowed(SessionModificationSetJoinInProgressAllowedOptions options)
+		public Result SetJoinInProgressAllowed(ref SessionModificationSetJoinInProgressAllowedOptions options)
 		{
-			var optionsAddress = System.IntPtr.Zero;
-			Helper.TryMarshalSet<SessionModificationSetJoinInProgressAllowedOptionsInternal, SessionModificationSetJoinInProgressAllowedOptions>(ref optionsAddress, options);
+			SessionModificationSetJoinInProgressAllowedOptionsInternal optionsInternal = new SessionModificationSetJoinInProgressAllowedOptionsInternal();
+			optionsInternal.Set(ref options);
 
-			var funcResult = Bindings.EOS_SessionModification_SetJoinInProgressAllowed(InnerHandle, optionsAddress);
+			var funcResult = Bindings.EOS_SessionModification_SetJoinInProgressAllowed(InnerHandle, ref optionsInternal);
 
-			Helper.TryMarshalDispose(ref optionsAddress);
+			Helper.Dispose(ref optionsInternal);
 
 			return funcResult;
 		}
@@ -228,14 +253,14 @@ namespace Epic.OnlineServices.Sessions
 		/// <see cref="Result.Success" /> if setting this parameter was successful
 		/// <see cref="Result.IncompatibleVersion" /> if the API version passed in is incorrect
 		/// </returns>
-		public Result SetMaxPlayers(SessionModificationSetMaxPlayersOptions options)
+		public Result SetMaxPlayers(ref SessionModificationSetMaxPlayersOptions options)
 		{
-			var optionsAddress = System.IntPtr.Zero;
-			Helper.TryMarshalSet<SessionModificationSetMaxPlayersOptionsInternal, SessionModificationSetMaxPlayersOptions>(ref optionsAddress, options);
+			SessionModificationSetMaxPlayersOptionsInternal optionsInternal = new SessionModificationSetMaxPlayersOptionsInternal();
+			optionsInternal.Set(ref options);
 
-			var funcResult = Bindings.EOS_SessionModification_SetMaxPlayers(InnerHandle, optionsAddress);
+			var funcResult = Bindings.EOS_SessionModification_SetMaxPlayers(InnerHandle, ref optionsInternal);
 
-			Helper.TryMarshalDispose(ref optionsAddress);
+			Helper.Dispose(ref optionsInternal);
 
 			return funcResult;
 		}
@@ -249,14 +274,14 @@ namespace Epic.OnlineServices.Sessions
 		/// <see cref="Result.Success" /> if setting this parameter was successful
 		/// <see cref="Result.IncompatibleVersion" /> if the API version passed in is incorrect
 		/// </returns>
-		public Result SetPermissionLevel(SessionModificationSetPermissionLevelOptions options)
+		public Result SetPermissionLevel(ref SessionModificationSetPermissionLevelOptions options)
 		{
-			var optionsAddress = System.IntPtr.Zero;
-			Helper.TryMarshalSet<SessionModificationSetPermissionLevelOptionsInternal, SessionModificationSetPermissionLevelOptions>(ref optionsAddress, options);
+			SessionModificationSetPermissionLevelOptionsInternal optionsInternal = new SessionModificationSetPermissionLevelOptionsInternal();
+			optionsInternal.Set(ref options);
 
-			var funcResult = Bindings.EOS_SessionModification_SetPermissionLevel(InnerHandle, optionsAddress);
+			var funcResult = Bindings.EOS_SessionModification_SetPermissionLevel(InnerHandle, ref optionsInternal);
 
-			Helper.TryMarshalDispose(ref optionsAddress);
+			Helper.Dispose(ref optionsInternal);
 
 			return funcResult;
 		}

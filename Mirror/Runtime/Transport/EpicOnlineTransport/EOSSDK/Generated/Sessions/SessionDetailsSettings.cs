@@ -6,12 +6,12 @@ namespace Epic.OnlineServices.Sessions
 	/// <summary>
 	/// Common settings associated with a single session
 	/// </summary>
-	public class SessionDetailsSettings : ISettable
+	public struct SessionDetailsSettings
 	{
 		/// <summary>
-		/// The main indexed parameter for this session, can be any string (ie "Region:GameMode")
+		/// The main indexed parameter for this session, can be any string (i.e. "Region:GameMode")
 		/// </summary>
-		public string BucketId { get; set; }
+		public Utf8String BucketId { get; set; }
 
 		/// <summary>
 		/// Number of total players allowed in the session
@@ -33,26 +33,32 @@ namespace Epic.OnlineServices.Sessions
 		/// </summary>
 		public bool InvitesAllowed { get; set; }
 
-		internal void Set(SessionDetailsSettingsInternal? other)
-		{
-			if (other != null)
-			{
-				BucketId = other.Value.BucketId;
-				NumPublicConnections = other.Value.NumPublicConnections;
-				AllowJoinInProgress = other.Value.AllowJoinInProgress;
-				PermissionLevel = other.Value.PermissionLevel;
-				InvitesAllowed = other.Value.InvitesAllowed;
-			}
-		}
+		/// <summary>
+		/// Are sanctioned players allowed to join - sanctioned players will be rejected if set to true
+		/// </summary>
+		public bool SanctionsEnabled { get; set; }
 
-		public void Set(object other)
+		/// <summary>
+		/// Array of platform IDs indicating the player platforms allowed to register with the session. Platform IDs are
+		/// found in the EOS header file, e.g. <see cref="Common.OptEpic" />. For some platforms, the value will be in the EOS Platform specific
+		/// header file. If null, the session will be unrestricted.
+		/// </summary>
+		public uint[] AllowedPlatformIds { get; set; }
+
+		internal void Set(ref SessionDetailsSettingsInternal other)
 		{
-			Set(other as SessionDetailsSettingsInternal?);
+			BucketId = other.BucketId;
+			NumPublicConnections = other.NumPublicConnections;
+			AllowJoinInProgress = other.AllowJoinInProgress;
+			PermissionLevel = other.PermissionLevel;
+			InvitesAllowed = other.InvitesAllowed;
+			SanctionsEnabled = other.SanctionsEnabled;
+			AllowedPlatformIds = other.AllowedPlatformIds;
 		}
 	}
 
 	[System.Runtime.InteropServices.StructLayout(System.Runtime.InteropServices.LayoutKind.Sequential, Pack = 8)]
-	internal struct SessionDetailsSettingsInternal : ISettable, System.IDisposable
+	internal struct SessionDetailsSettingsInternal : IGettable<SessionDetailsSettings>, ISettable<SessionDetailsSettings>, System.IDisposable
 	{
 		private int m_ApiVersion;
 		private System.IntPtr m_BucketId;
@@ -60,19 +66,22 @@ namespace Epic.OnlineServices.Sessions
 		private int m_AllowJoinInProgress;
 		private OnlineSessionPermissionLevel m_PermissionLevel;
 		private int m_InvitesAllowed;
+		private int m_SanctionsEnabled;
+		private System.IntPtr m_AllowedPlatformIds;
+		private uint m_AllowedPlatformIdsCount;
 
-		public string BucketId
+		public Utf8String BucketId
 		{
 			get
 			{
-				string value;
-				Helper.TryMarshalGet(m_BucketId, out value);
+				Utf8String value;
+				Helper.Get(m_BucketId, out value);
 				return value;
 			}
 
 			set
 			{
-				Helper.TryMarshalSet(ref m_BucketId, value);
+				Helper.Set(value, ref m_BucketId);
 			}
 		}
 
@@ -94,13 +103,13 @@ namespace Epic.OnlineServices.Sessions
 			get
 			{
 				bool value;
-				Helper.TryMarshalGet(m_AllowJoinInProgress, out value);
+				Helper.Get(m_AllowJoinInProgress, out value);
 				return value;
 			}
 
 			set
 			{
-				Helper.TryMarshalSet(ref m_AllowJoinInProgress, value);
+				Helper.Set(value, ref m_AllowJoinInProgress);
 			}
 		}
 
@@ -122,37 +131,83 @@ namespace Epic.OnlineServices.Sessions
 			get
 			{
 				bool value;
-				Helper.TryMarshalGet(m_InvitesAllowed, out value);
+				Helper.Get(m_InvitesAllowed, out value);
 				return value;
 			}
 
 			set
 			{
-				Helper.TryMarshalSet(ref m_InvitesAllowed, value);
+				Helper.Set(value, ref m_InvitesAllowed);
 			}
 		}
 
-		public void Set(SessionDetailsSettings other)
+		public bool SanctionsEnabled
 		{
-			if (other != null)
+			get
+			{
+				bool value;
+				Helper.Get(m_SanctionsEnabled, out value);
+				return value;
+			}
+
+			set
+			{
+				Helper.Set(value, ref m_SanctionsEnabled);
+			}
+		}
+
+		public uint[] AllowedPlatformIds
+		{
+			get
+			{
+				uint[] value;
+				Helper.Get(m_AllowedPlatformIds, out value, m_AllowedPlatformIdsCount);
+				return value;
+			}
+
+			set
+			{
+				Helper.Set(value, ref m_AllowedPlatformIds, out m_AllowedPlatformIdsCount);
+			}
+		}
+
+		public void Set(ref SessionDetailsSettings other)
+		{
+			m_ApiVersion = SessionDetails.SessiondetailsSettingsApiLatest;
+			BucketId = other.BucketId;
+			NumPublicConnections = other.NumPublicConnections;
+			AllowJoinInProgress = other.AllowJoinInProgress;
+			PermissionLevel = other.PermissionLevel;
+			InvitesAllowed = other.InvitesAllowed;
+			SanctionsEnabled = other.SanctionsEnabled;
+			AllowedPlatformIds = other.AllowedPlatformIds;
+		}
+
+		public void Set(ref SessionDetailsSettings? other)
+		{
+			if (other.HasValue)
 			{
 				m_ApiVersion = SessionDetails.SessiondetailsSettingsApiLatest;
-				BucketId = other.BucketId;
-				NumPublicConnections = other.NumPublicConnections;
-				AllowJoinInProgress = other.AllowJoinInProgress;
-				PermissionLevel = other.PermissionLevel;
-				InvitesAllowed = other.InvitesAllowed;
+				BucketId = other.Value.BucketId;
+				NumPublicConnections = other.Value.NumPublicConnections;
+				AllowJoinInProgress = other.Value.AllowJoinInProgress;
+				PermissionLevel = other.Value.PermissionLevel;
+				InvitesAllowed = other.Value.InvitesAllowed;
+				SanctionsEnabled = other.Value.SanctionsEnabled;
+				AllowedPlatformIds = other.Value.AllowedPlatformIds;
 			}
-		}
-
-		public void Set(object other)
-		{
-			Set(other as SessionDetailsSettings);
 		}
 
 		public void Dispose()
 		{
-			Helper.TryMarshalDispose(ref m_BucketId);
+			Helper.Dispose(ref m_BucketId);
+			Helper.Dispose(ref m_AllowedPlatformIds);
+		}
+
+		public void Get(out SessionDetailsSettings output)
+		{
+			output = new SessionDetailsSettings();
+			output.Set(ref this);
 		}
 	}
 }

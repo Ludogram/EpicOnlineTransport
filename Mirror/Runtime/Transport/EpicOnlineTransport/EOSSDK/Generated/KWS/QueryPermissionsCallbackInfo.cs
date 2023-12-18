@@ -6,64 +6,62 @@ namespace Epic.OnlineServices.KWS
 	/// <summary>
 	/// Output parameters for the <see cref="QueryPermissionsOptions" /> Function. These parameters are received through the callback provided to <see cref="KWSInterface.QueryPermissions" />
 	/// </summary>
-	public class QueryPermissionsCallbackInfo : ICallbackInfo, ISettable
+	public struct QueryPermissionsCallbackInfo : ICallbackInfo
 	{
 		/// <summary>
 		/// The <see cref="Result" /> code for the operation. <see cref="Result.Success" /> indicates that the operation succeeded; other codes indicate errors.
 		/// </summary>
-		public Result ResultCode { get; private set; }
+		public Result ResultCode { get; set; }
 
 		/// <summary>
 		/// Context that was passed into <see cref="KWSInterface.QueryPermissions" />
 		/// </summary>
-		public object ClientData { get; private set; }
+		public object ClientData { get; set; }
 
 		/// <summary>
-		/// Local user querying their permisssions
+		/// Local user querying their permissions
 		/// </summary>
-		public ProductUserId LocalUserId { get; private set; }
+		public ProductUserId LocalUserId { get; set; }
 
 		/// <summary>
 		/// KWS UserId created
 		/// </summary>
-		public string KWSUserId { get; private set; }
+		public Utf8String KWSUserId { get; set; }
 
 		/// <summary>
 		/// Date of birth in ISO8601 form (YYYY-MM-DD)
 		/// </summary>
-		public string DateOfBirth { get; private set; }
+		public Utf8String DateOfBirth { get; set; }
 
 		/// <summary>
 		/// Is this user a minor
 		/// </summary>
-		public bool IsMinor { get; private set; }
+		public bool IsMinor { get; set; }
+
+		/// <summary>
+		/// Parent email. This value may be set to an empty string if the originally registered email recipient declined to be the right person to give consent.
+		/// </summary>
+		public Utf8String ParentEmail { get; set; }
 
 		public Result? GetResultCode()
 		{
 			return ResultCode;
 		}
 
-		internal void Set(QueryPermissionsCallbackInfoInternal? other)
+		internal void Set(ref QueryPermissionsCallbackInfoInternal other)
 		{
-			if (other != null)
-			{
-				ResultCode = other.Value.ResultCode;
-				ClientData = other.Value.ClientData;
-				LocalUserId = other.Value.LocalUserId;
-				KWSUserId = other.Value.KWSUserId;
-				DateOfBirth = other.Value.DateOfBirth;
-				IsMinor = other.Value.IsMinor;
-			}
-		}
-
-		public void Set(object other)
-		{
-			Set(other as QueryPermissionsCallbackInfoInternal?);
+			ResultCode = other.ResultCode;
+			ClientData = other.ClientData;
+			LocalUserId = other.LocalUserId;
+			KWSUserId = other.KWSUserId;
+			DateOfBirth = other.DateOfBirth;
+			IsMinor = other.IsMinor;
+			ParentEmail = other.ParentEmail;
 		}
 	}
 
 	[System.Runtime.InteropServices.StructLayout(System.Runtime.InteropServices.LayoutKind.Sequential, Pack = 8)]
-	internal struct QueryPermissionsCallbackInfoInternal : ICallbackInfoInternal
+	internal struct QueryPermissionsCallbackInfoInternal : ICallbackInfoInternal, IGettable<QueryPermissionsCallbackInfo>, ISettable<QueryPermissionsCallbackInfo>, System.IDisposable
 	{
 		private Result m_ResultCode;
 		private System.IntPtr m_ClientData;
@@ -71,12 +69,18 @@ namespace Epic.OnlineServices.KWS
 		private System.IntPtr m_KWSUserId;
 		private System.IntPtr m_DateOfBirth;
 		private int m_IsMinor;
+		private System.IntPtr m_ParentEmail;
 
 		public Result ResultCode
 		{
 			get
 			{
 				return m_ResultCode;
+			}
+
+			set
+			{
+				m_ResultCode = value;
 			}
 		}
 
@@ -85,8 +89,13 @@ namespace Epic.OnlineServices.KWS
 			get
 			{
 				object value;
-				Helper.TryMarshalGet(m_ClientData, out value);
+				Helper.Get(m_ClientData, out value);
 				return value;
+			}
+
+			set
+			{
+				Helper.Set(value, ref m_ClientData);
 			}
 		}
 
@@ -103,28 +112,43 @@ namespace Epic.OnlineServices.KWS
 			get
 			{
 				ProductUserId value;
-				Helper.TryMarshalGet(m_LocalUserId, out value);
+				Helper.Get(m_LocalUserId, out value);
 				return value;
+			}
+
+			set
+			{
+				Helper.Set(value, ref m_LocalUserId);
 			}
 		}
 
-		public string KWSUserId
+		public Utf8String KWSUserId
 		{
 			get
 			{
-				string value;
-				Helper.TryMarshalGet(m_KWSUserId, out value);
+				Utf8String value;
+				Helper.Get(m_KWSUserId, out value);
 				return value;
+			}
+
+			set
+			{
+				Helper.Set(value, ref m_KWSUserId);
 			}
 		}
 
-		public string DateOfBirth
+		public Utf8String DateOfBirth
 		{
 			get
 			{
-				string value;
-				Helper.TryMarshalGet(m_DateOfBirth, out value);
+				Utf8String value;
+				Helper.Get(m_DateOfBirth, out value);
 				return value;
+			}
+
+			set
+			{
+				Helper.Set(value, ref m_DateOfBirth);
 			}
 		}
 
@@ -133,9 +157,69 @@ namespace Epic.OnlineServices.KWS
 			get
 			{
 				bool value;
-				Helper.TryMarshalGet(m_IsMinor, out value);
+				Helper.Get(m_IsMinor, out value);
 				return value;
 			}
+
+			set
+			{
+				Helper.Set(value, ref m_IsMinor);
+			}
+		}
+
+		public Utf8String ParentEmail
+		{
+			get
+			{
+				Utf8String value;
+				Helper.Get(m_ParentEmail, out value);
+				return value;
+			}
+
+			set
+			{
+				Helper.Set(value, ref m_ParentEmail);
+			}
+		}
+
+		public void Set(ref QueryPermissionsCallbackInfo other)
+		{
+			ResultCode = other.ResultCode;
+			ClientData = other.ClientData;
+			LocalUserId = other.LocalUserId;
+			KWSUserId = other.KWSUserId;
+			DateOfBirth = other.DateOfBirth;
+			IsMinor = other.IsMinor;
+			ParentEmail = other.ParentEmail;
+		}
+
+		public void Set(ref QueryPermissionsCallbackInfo? other)
+		{
+			if (other.HasValue)
+			{
+				ResultCode = other.Value.ResultCode;
+				ClientData = other.Value.ClientData;
+				LocalUserId = other.Value.LocalUserId;
+				KWSUserId = other.Value.KWSUserId;
+				DateOfBirth = other.Value.DateOfBirth;
+				IsMinor = other.Value.IsMinor;
+				ParentEmail = other.Value.ParentEmail;
+			}
+		}
+
+		public void Dispose()
+		{
+			Helper.Dispose(ref m_ClientData);
+			Helper.Dispose(ref m_LocalUserId);
+			Helper.Dispose(ref m_KWSUserId);
+			Helper.Dispose(ref m_DateOfBirth);
+			Helper.Dispose(ref m_ParentEmail);
+		}
+
+		public void Get(out QueryPermissionsCallbackInfo output)
+		{
+			output = new QueryPermissionsCallbackInfo();
+			output.Set(ref this);
 		}
 	}
 }

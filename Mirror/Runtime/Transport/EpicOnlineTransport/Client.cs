@@ -27,8 +27,19 @@ namespace EpicTransport {
         private TaskCompletionSource<Task> connectedComplete;
         private CancellationTokenSource cancelToken;
 
+        private ulong callbackId;
+        
+        public NetworkConnectionType NetworkType { get; private set; } = NetworkConnectionType.NoConnection;
+
         private Client(EosTransport transport) : base(transport) {
             ConnectionTimeout = TimeSpan.FromSeconds(Math.Max(1, transport.timeout));
+            
+            AddNotifyPeerConnectionEstablishedOptions options = new ()
+            {
+	            LocalUserId = EOSSDKComponent.LocalUserProductId
+            };
+
+            callbackId = EOSSDKComponent.GetP2PInterface().AddNotifyPeerConnectionEstablished(ref options, null, OnPeerConnectionEstablished);
         }
 
         public static Client CreateClient(EosTransport transport, string host) {
@@ -42,6 +53,16 @@ namespace EpicTransport {
             c.OnReceivedData += (data, channel) => transport.OnClientDataReceived.Invoke(new ArraySegment<byte>(data), channel);
 
             return c;
+        }
+
+        private void OnPeerConnectionEstablished(ref OnPeerConnectionEstablishedInfo data)
+        {
+	        Debug.Log("Connection with peer established. Network type: "
+	                  + data.NetworkType + ". UserId: "
+	                  + data.RemoteUserId + ". Connection Type: "
+	                  + data.ConnectionType);
+
+	        NetworkType = data.NetworkType;
         }
 
         public async void Connect(string host) {
@@ -91,6 +112,8 @@ namespace EpicTransport {
             }
 
             SendInternal(hostProductId, socketId, InternalMessages.DISCONNECT);
+            
+            EOSSDKComponent.GetP2PInterface().RemoveNotifyPeerConnectionEstablished(callbackId);
 
             Dispose();
             cancelToken?.Cancel();
@@ -113,23 +136,24 @@ namespace EpicTransport {
             OnReceivedData.Invoke(data, channel);
         }
 
-        protected override void OnNewConnection(OnIncomingConnectionRequestInfo result) {
+        protected override void OnNewConnection(ref OnIncomingConnectionRequestInfo result) {
             if (ignoreAllMessages) {
                 return;
             }
 
-            if (deadSockets.Contains(result.SocketId.SocketName)) {
+            if (deadSockets.Contains(result.SocketId?.SocketName)) {
                 Debug.LogError("Received incoming connection request from dead socket");
                 return;
             }
 
             if (hostProductId == result.RemoteUserId) {
+                var acceptConnectionOptions = new AcceptConnectionOptions() {
+		            LocalUserId = EOSSDKComponent.LocalUserProductId,
+		            RemoteUserId = result.RemoteUserId,
+		            SocketId = result.SocketId
+	            };
                 EOSSDKComponent.GetP2PInterface().AcceptConnection(
-                    new AcceptConnectionOptions() {
-                        LocalUserId = EOSSDKComponent.LocalUserProductId,
-                        RemoteUserId = result.RemoteUserId,
-                        SocketId = result.SocketId
-                    });
+                    ref acceptConnectionOptions);
             } else {
                 Debug.LogError("P2P Acceptance Request from unknown host ID.");
             }

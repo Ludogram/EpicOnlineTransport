@@ -13,9 +13,35 @@ namespace Epic.OnlineServices.Platform
 		{
 		}
 
+		/// <summary>
+		/// The name of the env var used to determine if the game was launched by the Epic Games Launcher.
+		/// 
+		/// During the call to <see cref="Create" />, the command line that was used to launch the app is inspected, and if it is
+		/// recognized as coming from the Epic Games Launcher, this environment variable is set to 1.
+		/// 
+		/// NOTE: You can force the <see cref="CheckForLauncherAndRestart" /> API to relaunch the title by
+		/// explicitly unsetting this environment variable before calling <see cref="CheckForLauncherAndRestart" />.
+		/// </summary>
+		public static readonly Utf8String CheckforlauncherandrestartEnvVar = "EOS_LAUNCHED_BY_EPIC";
+
+		/// <summary>
+		/// Max length of a client id, not including the terminating null.
+		/// </summary>
+		public const int ClientcredentialsClientidMaxLength = 64;
+
+		/// <summary>
+		/// Max length of a client secret, not including the terminating null.
+		/// </summary>
+		public const int ClientcredentialsClientsecretMaxLength = 64;
+
 		public const int CountrycodeMaxBufferLen = (CountrycodeMaxLength + 1);
 
 		public const int CountrycodeMaxLength = 4;
+
+		/// <summary>
+		/// The most recent version of the <see cref="GetDesktopCrossplayStatus" /> API.
+		/// </summary>
+		public const int GetdesktopcrossplaystatusApiLatest = 1;
 
 		/// <summary>
 		/// The most recent version of the <see cref="Initialize" /> API.
@@ -25,21 +51,58 @@ namespace Epic.OnlineServices.Platform
 		/// <summary>
 		/// The most recent version of the <see cref="InitializeThreadAffinity" /> API.
 		/// </summary>
-		public const int InitializeThreadaffinityApiLatest = 1;
+		public const int InitializeThreadaffinityApiLatest = 2;
+
+		/// <summary>
+		/// Max length of a product name, not including the terminating null.
+		/// </summary>
+		public const int InitializeoptionsProductnameMaxLength = 64;
+
+		/// <summary>
+		/// Max length of a product version, not including the terminating null.
+		/// </summary>
+		public const int InitializeoptionsProductversionMaxLength = 64;
 
 		public const int LocalecodeMaxBufferLen = (LocalecodeMaxLength + 1);
 
 		public const int LocalecodeMaxLength = 9;
 
-		public const int OptionsApiLatest = 11;
+		public const int OptionsApiLatest = 13;
+
+		/// <summary>
+		/// Max length of a deployment id, not including the terminating null.
+		/// </summary>
+		public const int OptionsDeploymentidMaxLength = 64;
+
+		/// <summary>
+		/// Length of an encryption key, not including the terminating null.
+		/// </summary>
+		public const int OptionsEncryptionkeyLength = 64;
+
+		/// <summary>
+		/// Max length of a product id, not including the terminating null.
+		/// </summary>
+		public const int OptionsProductidMaxLength = 64;
+
+		/// <summary>
+		/// Max length of a sandbox id, not including the terminating null.
+		/// </summary>
+		public const int OptionsSandboxidMaxLength = 64;
 
 		/// <summary>
 		/// The most recent version of the <see cref="RTCOptions" /> API.
 		/// </summary>
-		public const int RtcoptionsApiLatest = 1;
+		public const int RtcoptionsApiLatest = 2;
 
 		/// <summary>
-		/// Checks if the app was launched through the Epic Launcher, and relaunches it through the Epic Launcher if it wasn't.
+		/// Checks if the app was launched through the Epic Games Launcher, and relaunches it through the Epic Games Launcher if it wasn't.
+		/// 
+		/// NOTE: During the call to <see cref="Create" />, the command line that was used to launch the app is inspected, and if it is
+		/// recognized as coming from the Epic Games Launcher, an environment variable is set to 1. The name of the environment variable
+		/// is defined by <see cref="CheckforlauncherandrestartEnvVar" />.
+		/// 
+		/// You can force the <see cref="CheckForLauncherAndRestart" /> API to relaunch the title by
+		/// explicitly unsetting this environment variable before calling <see cref="CheckForLauncherAndRestart" />.
 		/// </summary>
 		/// <returns>
 		/// An <see cref="Result" /> is returned to indicate success or an error.
@@ -64,17 +127,17 @@ namespace Epic.OnlineServices.Platform
 		/// <returns>
 		/// An opaque handle to the platform instance.
 		/// </returns>
-		public static PlatformInterface Create(Options options)
+		public static PlatformInterface Create(ref Options options)
 		{
-			var optionsAddress = System.IntPtr.Zero;
-			Helper.TryMarshalSet<OptionsInternal, Options>(ref optionsAddress, options);
+			OptionsInternal optionsInternal = new OptionsInternal();
+			optionsInternal.Set(ref options);
 
-			var funcResult = Bindings.EOS_Platform_Create(optionsAddress);
+			var funcResult = Bindings.EOS_Platform_Create(ref optionsInternal);
 
-			Helper.TryMarshalDispose(ref optionsAddress);
+			Helper.Dispose(ref optionsInternal);
 
 			PlatformInterface funcResultReturn;
-			Helper.TryMarshalGet(funcResult, out funcResultReturn);
+			Helper.Get(funcResult, out funcResultReturn);
 			return funcResultReturn;
 		}
 
@@ -91,7 +154,7 @@ namespace Epic.OnlineServices.Platform
 			var funcResult = Bindings.EOS_Platform_GetAchievementsInterface(InnerHandle);
 
 			Achievements.AchievementsInterface funcResultReturn;
-			Helper.TryMarshalGet(funcResult, out funcResultReturn);
+			Helper.Get(funcResult, out funcResultReturn);
 			return funcResultReturn;
 		}
 
@@ -115,19 +178,18 @@ namespace Epic.OnlineServices.Platform
 		/// <see cref="Result.NotFound" /> if there is not an override country code for the user.
 		/// <see cref="Result.LimitExceeded" /> - The OutBuffer is not large enough to receive the country code string. InOutBufferLength contains the required minimum length to perform the operation successfully.
 		/// </returns>
-		public Result GetActiveCountryCode(EpicAccountId localUserId, out string outBuffer)
+		public Result GetActiveCountryCode(EpicAccountId localUserId, out Utf8String outBuffer)
 		{
 			var localUserIdInnerHandle = System.IntPtr.Zero;
-			Helper.TryMarshalSet(ref localUserIdInnerHandle, localUserId);
+			Helper.Set(localUserId, ref localUserIdInnerHandle);
 
-			System.IntPtr outBufferAddress = System.IntPtr.Zero;
 			int inOutBufferLength = CountrycodeMaxLength + 1;
-			Helper.TryMarshalAllocate(ref outBufferAddress, inOutBufferLength, out _);
+			System.IntPtr outBufferAddress = Helper.AddAllocation(inOutBufferLength);
 
 			var funcResult = Bindings.EOS_Platform_GetActiveCountryCode(InnerHandle, localUserIdInnerHandle, outBufferAddress, ref inOutBufferLength);
 
-			Helper.TryMarshalGet(outBufferAddress, out outBuffer);
-			Helper.TryMarshalDispose(ref outBufferAddress);
+			Helper.Get(outBufferAddress, out outBuffer);
+			Helper.Dispose(ref outBufferAddress);
 
 			return funcResult;
 		}
@@ -153,19 +215,18 @@ namespace Epic.OnlineServices.Platform
 		/// <see cref="Result.NotFound" /> if there is neither an override nor an available locale code for the user.
 		/// <see cref="Result.LimitExceeded" /> - The OutBuffer is not large enough to receive the locale code string. InOutBufferLength contains the required minimum length to perform the operation successfully.
 		/// </returns>
-		public Result GetActiveLocaleCode(EpicAccountId localUserId, out string outBuffer)
+		public Result GetActiveLocaleCode(EpicAccountId localUserId, out Utf8String outBuffer)
 		{
 			var localUserIdInnerHandle = System.IntPtr.Zero;
-			Helper.TryMarshalSet(ref localUserIdInnerHandle, localUserId);
+			Helper.Set(localUserId, ref localUserIdInnerHandle);
 
-			System.IntPtr outBufferAddress = System.IntPtr.Zero;
 			int inOutBufferLength = LocalecodeMaxLength + 1;
-			Helper.TryMarshalAllocate(ref outBufferAddress, inOutBufferLength, out _);
+			System.IntPtr outBufferAddress = Helper.AddAllocation(inOutBufferLength);
 
 			var funcResult = Bindings.EOS_Platform_GetActiveLocaleCode(InnerHandle, localUserIdInnerHandle, outBufferAddress, ref inOutBufferLength);
 
-			Helper.TryMarshalGet(outBufferAddress, out outBuffer);
-			Helper.TryMarshalDispose(ref outBufferAddress);
+			Helper.Get(outBufferAddress, out outBuffer);
+			Helper.Dispose(ref outBufferAddress);
 
 			return funcResult;
 		}
@@ -183,7 +244,7 @@ namespace Epic.OnlineServices.Platform
 			var funcResult = Bindings.EOS_Platform_GetAntiCheatClientInterface(InnerHandle);
 
 			AntiCheatClient.AntiCheatClientInterface funcResultReturn;
-			Helper.TryMarshalGet(funcResult, out funcResultReturn);
+			Helper.Get(funcResult, out funcResultReturn);
 			return funcResultReturn;
 		}
 
@@ -200,8 +261,21 @@ namespace Epic.OnlineServices.Platform
 			var funcResult = Bindings.EOS_Platform_GetAntiCheatServerInterface(InnerHandle);
 
 			AntiCheatServer.AntiCheatServerInterface funcResultReturn;
-			Helper.TryMarshalGet(funcResult, out funcResultReturn);
+			Helper.Get(funcResult, out funcResultReturn);
 			return funcResultReturn;
+		}
+
+		/// <summary>
+		/// Retrieves the current application state as told to the SDK by the application.
+		/// </summary>
+		/// <returns>
+		/// The current application status.
+		/// </returns>
+		public ApplicationStatus GetApplicationStatus()
+		{
+			var funcResult = Bindings.EOS_Platform_GetApplicationStatus(InnerHandle);
+
+			return funcResult;
 		}
 
 		/// <summary>
@@ -217,7 +291,7 @@ namespace Epic.OnlineServices.Platform
 			var funcResult = Bindings.EOS_Platform_GetAuthInterface(InnerHandle);
 
 			Auth.AuthInterface funcResultReturn;
-			Helper.TryMarshalGet(funcResult, out funcResultReturn);
+			Helper.Get(funcResult, out funcResultReturn);
 			return funcResultReturn;
 		}
 
@@ -234,8 +308,58 @@ namespace Epic.OnlineServices.Platform
 			var funcResult = Bindings.EOS_Platform_GetConnectInterface(InnerHandle);
 
 			Connect.ConnectInterface funcResultReturn;
-			Helper.TryMarshalGet(funcResult, out funcResultReturn);
+			Helper.Get(funcResult, out funcResultReturn);
 			return funcResultReturn;
+		}
+
+		/// <summary>
+		/// Get a handle to the Custom Invites Interface.
+		/// eos_custominvites.h
+		/// eos_custominvites_types.h
+		/// </summary>
+		/// <returns>
+		/// <see cref="CustomInvites.CustomInvitesInterface" /> handle
+		/// </returns>
+		public CustomInvites.CustomInvitesInterface GetCustomInvitesInterface()
+		{
+			var funcResult = Bindings.EOS_Platform_GetCustomInvitesInterface(InnerHandle);
+
+			CustomInvites.CustomInvitesInterface funcResultReturn;
+			Helper.Get(funcResult, out funcResultReturn);
+			return funcResultReturn;
+		}
+
+		/// <summary>
+		/// Windows only.
+		/// Checks that the application is ready to use desktop crossplay functionality, with the necessary prerequisites having been met.
+		/// 
+		/// This function verifies that the application was launched through the Bootstrapper application,
+		/// the redistributable service has been installed and is running in the background,
+		/// and that the overlay has been loaded successfully.
+		/// 
+		/// On Windows, the desktop crossplay functionality is required to use Epic accounts login
+		/// with applications that are distributed outside the Epic Games Store.
+		/// </summary>
+		/// <param name="options">input structure that specifies the API version.</param>
+		/// <param name="outDesktopCrossplayStatusInfo">output structure to receive the desktop crossplay status information.</param>
+		/// <returns>
+		/// An <see cref="Result" /> is returned to indicate success or an error.
+		/// <see cref="Result.NotImplemented" /> is returned on non-Windows platforms.
+		/// </returns>
+		public Result GetDesktopCrossplayStatus(ref GetDesktopCrossplayStatusOptions options, out DesktopCrossplayStatusInfo outDesktopCrossplayStatusInfo)
+		{
+			GetDesktopCrossplayStatusOptionsInternal optionsInternal = new GetDesktopCrossplayStatusOptionsInternal();
+			optionsInternal.Set(ref options);
+
+			var outDesktopCrossplayStatusInfoInternal = Helper.GetDefault<DesktopCrossplayStatusInfoInternal>();
+
+			var funcResult = Bindings.EOS_Platform_GetDesktopCrossplayStatus(InnerHandle, ref optionsInternal, ref outDesktopCrossplayStatusInfoInternal);
+
+			Helper.Dispose(ref optionsInternal);
+
+			Helper.Get(ref outDesktopCrossplayStatusInfoInternal, out outDesktopCrossplayStatusInfo);
+
+			return funcResult;
 		}
 
 		/// <summary>
@@ -251,7 +375,7 @@ namespace Epic.OnlineServices.Platform
 			var funcResult = Bindings.EOS_Platform_GetEcomInterface(InnerHandle);
 
 			Ecom.EcomInterface funcResultReturn;
-			Helper.TryMarshalGet(funcResult, out funcResultReturn);
+			Helper.Get(funcResult, out funcResultReturn);
 			return funcResultReturn;
 		}
 
@@ -268,7 +392,24 @@ namespace Epic.OnlineServices.Platform
 			var funcResult = Bindings.EOS_Platform_GetFriendsInterface(InnerHandle);
 
 			Friends.FriendsInterface funcResultReturn;
-			Helper.TryMarshalGet(funcResult, out funcResultReturn);
+			Helper.Get(funcResult, out funcResultReturn);
+			return funcResultReturn;
+		}
+
+		/// <summary>
+		/// Get a handle to the Integrated Platform Interface.
+		/// eos_integratedplatform.h
+		/// eos_integratedplatform_types.h
+		/// </summary>
+		/// <returns>
+		/// <see cref="IntegratedPlatform.IntegratedPlatformInterface" /> handle
+		/// </returns>
+		public IntegratedPlatform.IntegratedPlatformInterface GetIntegratedPlatformInterface()
+		{
+			var funcResult = Bindings.EOS_Platform_GetIntegratedPlatformInterface(InnerHandle);
+
+			IntegratedPlatform.IntegratedPlatformInterface funcResultReturn;
+			Helper.Get(funcResult, out funcResultReturn);
 			return funcResultReturn;
 		}
 
@@ -285,7 +426,7 @@ namespace Epic.OnlineServices.Platform
 			var funcResult = Bindings.EOS_Platform_GetKWSInterface(InnerHandle);
 
 			KWS.KWSInterface funcResultReturn;
-			Helper.TryMarshalGet(funcResult, out funcResultReturn);
+			Helper.Get(funcResult, out funcResultReturn);
 			return funcResultReturn;
 		}
 
@@ -302,7 +443,7 @@ namespace Epic.OnlineServices.Platform
 			var funcResult = Bindings.EOS_Platform_GetLeaderboardsInterface(InnerHandle);
 
 			Leaderboards.LeaderboardsInterface funcResultReturn;
-			Helper.TryMarshalGet(funcResult, out funcResultReturn);
+			Helper.Get(funcResult, out funcResultReturn);
 			return funcResultReturn;
 		}
 
@@ -319,7 +460,7 @@ namespace Epic.OnlineServices.Platform
 			var funcResult = Bindings.EOS_Platform_GetLobbyInterface(InnerHandle);
 
 			Lobby.LobbyInterface funcResultReturn;
-			Helper.TryMarshalGet(funcResult, out funcResultReturn);
+			Helper.Get(funcResult, out funcResultReturn);
 			return funcResultReturn;
 		}
 
@@ -336,7 +477,7 @@ namespace Epic.OnlineServices.Platform
 			var funcResult = Bindings.EOS_Platform_GetMetricsInterface(InnerHandle);
 
 			Metrics.MetricsInterface funcResultReturn;
-			Helper.TryMarshalGet(funcResult, out funcResultReturn);
+			Helper.Get(funcResult, out funcResultReturn);
 			return funcResultReturn;
 		}
 
@@ -353,8 +494,21 @@ namespace Epic.OnlineServices.Platform
 			var funcResult = Bindings.EOS_Platform_GetModsInterface(InnerHandle);
 
 			Mods.ModsInterface funcResultReturn;
-			Helper.TryMarshalGet(funcResult, out funcResultReturn);
+			Helper.Get(funcResult, out funcResultReturn);
 			return funcResultReturn;
+		}
+
+		/// <summary>
+		/// Retrieves the current network state as told to the SDK by the application.
+		/// </summary>
+		/// <returns>
+		/// The current network status.
+		/// </returns>
+		public NetworkStatus GetNetworkStatus()
+		{
+			var funcResult = Bindings.EOS_Platform_GetNetworkStatus(InnerHandle);
+
+			return funcResult;
 		}
 
 		/// <summary>
@@ -375,16 +529,15 @@ namespace Epic.OnlineServices.Platform
 		/// <see cref="Result.InvalidParameters" /> if you pass a null pointer for the out parameter
 		/// <see cref="Result.LimitExceeded" /> - The OutBuffer is not large enough to receive the country code string. InOutBufferLength contains the required minimum length to perform the operation successfully.
 		/// </returns>
-		public Result GetOverrideCountryCode(out string outBuffer)
+		public Result GetOverrideCountryCode(out Utf8String outBuffer)
 		{
-			System.IntPtr outBufferAddress = System.IntPtr.Zero;
 			int inOutBufferLength = CountrycodeMaxLength + 1;
-			Helper.TryMarshalAllocate(ref outBufferAddress, inOutBufferLength, out _);
+			System.IntPtr outBufferAddress = Helper.AddAllocation(inOutBufferLength);
 
 			var funcResult = Bindings.EOS_Platform_GetOverrideCountryCode(InnerHandle, outBufferAddress, ref inOutBufferLength);
 
-			Helper.TryMarshalGet(outBufferAddress, out outBuffer);
-			Helper.TryMarshalDispose(ref outBufferAddress);
+			Helper.Get(outBufferAddress, out outBuffer);
+			Helper.Dispose(ref outBufferAddress);
 
 			return funcResult;
 		}
@@ -407,16 +560,15 @@ namespace Epic.OnlineServices.Platform
 		/// <see cref="Result.InvalidParameters" /> if you pass a null pointer for the out parameter
 		/// <see cref="Result.LimitExceeded" /> - The OutBuffer is not large enough to receive the locale code string. InOutBufferLength contains the required minimum length to perform the operation successfully.
 		/// </returns>
-		public Result GetOverrideLocaleCode(out string outBuffer)
+		public Result GetOverrideLocaleCode(out Utf8String outBuffer)
 		{
-			System.IntPtr outBufferAddress = System.IntPtr.Zero;
 			int inOutBufferLength = LocalecodeMaxLength + 1;
-			Helper.TryMarshalAllocate(ref outBufferAddress, inOutBufferLength, out _);
+			System.IntPtr outBufferAddress = Helper.AddAllocation(inOutBufferLength);
 
 			var funcResult = Bindings.EOS_Platform_GetOverrideLocaleCode(InnerHandle, outBufferAddress, ref inOutBufferLength);
 
-			Helper.TryMarshalGet(outBufferAddress, out outBuffer);
-			Helper.TryMarshalDispose(ref outBufferAddress);
+			Helper.Get(outBufferAddress, out outBuffer);
+			Helper.Dispose(ref outBufferAddress);
 
 			return funcResult;
 		}
@@ -434,7 +586,7 @@ namespace Epic.OnlineServices.Platform
 			var funcResult = Bindings.EOS_Platform_GetP2PInterface(InnerHandle);
 
 			P2P.P2PInterface funcResultReturn;
-			Helper.TryMarshalGet(funcResult, out funcResultReturn);
+			Helper.Get(funcResult, out funcResultReturn);
 			return funcResultReturn;
 		}
 
@@ -451,7 +603,7 @@ namespace Epic.OnlineServices.Platform
 			var funcResult = Bindings.EOS_Platform_GetPlayerDataStorageInterface(InnerHandle);
 
 			PlayerDataStorage.PlayerDataStorageInterface funcResultReturn;
-			Helper.TryMarshalGet(funcResult, out funcResultReturn);
+			Helper.Get(funcResult, out funcResultReturn);
 			return funcResultReturn;
 		}
 
@@ -468,7 +620,27 @@ namespace Epic.OnlineServices.Platform
 			var funcResult = Bindings.EOS_Platform_GetPresenceInterface(InnerHandle);
 
 			Presence.PresenceInterface funcResultReturn;
-			Helper.TryMarshalGet(funcResult, out funcResultReturn);
+			Helper.Get(funcResult, out funcResultReturn);
+			return funcResultReturn;
+		}
+
+		/// <summary>
+		/// Get the active country code that the SDK will send to services which require it.
+		/// This returns the override value otherwise it will use the country code of the given user.
+		/// This is currently used for determining pricing.
+		/// Get a handle to the ProgressionSnapshot Interface.
+		/// eos_progressionsnapshot.h
+		/// eos_progressionsnapshot_types.h
+		/// </summary>
+		/// <returns>
+		/// <see cref="ProgressionSnapshot.ProgressionSnapshotInterface" /> handle
+		/// </returns>
+		public ProgressionSnapshot.ProgressionSnapshotInterface GetProgressionSnapshotInterface()
+		{
+			var funcResult = Bindings.EOS_Platform_GetProgressionSnapshotInterface(InnerHandle);
+
+			ProgressionSnapshot.ProgressionSnapshotInterface funcResultReturn;
+			Helper.Get(funcResult, out funcResultReturn);
 			return funcResultReturn;
 		}
 
@@ -485,7 +657,7 @@ namespace Epic.OnlineServices.Platform
 			var funcResult = Bindings.EOS_Platform_GetRTCAdminInterface(InnerHandle);
 
 			RTCAdmin.RTCAdminInterface funcResultReturn;
-			Helper.TryMarshalGet(funcResult, out funcResultReturn);
+			Helper.Get(funcResult, out funcResultReturn);
 			return funcResultReturn;
 		}
 
@@ -504,7 +676,7 @@ namespace Epic.OnlineServices.Platform
 			var funcResult = Bindings.EOS_Platform_GetRTCInterface(InnerHandle);
 
 			RTC.RTCInterface funcResultReturn;
-			Helper.TryMarshalGet(funcResult, out funcResultReturn);
+			Helper.Get(funcResult, out funcResultReturn);
 			return funcResultReturn;
 		}
 
@@ -521,7 +693,7 @@ namespace Epic.OnlineServices.Platform
 			var funcResult = Bindings.EOS_Platform_GetReportsInterface(InnerHandle);
 
 			Reports.ReportsInterface funcResultReturn;
-			Helper.TryMarshalGet(funcResult, out funcResultReturn);
+			Helper.Get(funcResult, out funcResultReturn);
 			return funcResultReturn;
 		}
 
@@ -538,7 +710,7 @@ namespace Epic.OnlineServices.Platform
 			var funcResult = Bindings.EOS_Platform_GetSanctionsInterface(InnerHandle);
 
 			Sanctions.SanctionsInterface funcResultReturn;
-			Helper.TryMarshalGet(funcResult, out funcResultReturn);
+			Helper.Get(funcResult, out funcResultReturn);
 			return funcResultReturn;
 		}
 
@@ -555,7 +727,7 @@ namespace Epic.OnlineServices.Platform
 			var funcResult = Bindings.EOS_Platform_GetSessionsInterface(InnerHandle);
 
 			Sessions.SessionsInterface funcResultReturn;
-			Helper.TryMarshalGet(funcResult, out funcResultReturn);
+			Helper.Get(funcResult, out funcResultReturn);
 			return funcResultReturn;
 		}
 
@@ -572,7 +744,7 @@ namespace Epic.OnlineServices.Platform
 			var funcResult = Bindings.EOS_Platform_GetStatsInterface(InnerHandle);
 
 			Stats.StatsInterface funcResultReturn;
-			Helper.TryMarshalGet(funcResult, out funcResultReturn);
+			Helper.Get(funcResult, out funcResultReturn);
 			return funcResultReturn;
 		}
 
@@ -589,7 +761,7 @@ namespace Epic.OnlineServices.Platform
 			var funcResult = Bindings.EOS_Platform_GetTitleStorageInterface(InnerHandle);
 
 			TitleStorage.TitleStorageInterface funcResultReturn;
-			Helper.TryMarshalGet(funcResult, out funcResultReturn);
+			Helper.Get(funcResult, out funcResultReturn);
 			return funcResultReturn;
 		}
 
@@ -606,7 +778,7 @@ namespace Epic.OnlineServices.Platform
 			var funcResult = Bindings.EOS_Platform_GetUIInterface(InnerHandle);
 
 			UI.UIInterface funcResultReturn;
-			Helper.TryMarshalGet(funcResult, out funcResultReturn);
+			Helper.Get(funcResult, out funcResultReturn);
 			return funcResultReturn;
 		}
 
@@ -623,7 +795,7 @@ namespace Epic.OnlineServices.Platform
 			var funcResult = Bindings.EOS_Platform_GetUserInfoInterface(InnerHandle);
 
 			UserInfo.UserInfoInterface funcResultReturn;
-			Helper.TryMarshalGet(funcResult, out funcResultReturn);
+			Helper.Get(funcResult, out funcResultReturn);
 			return funcResultReturn;
 		}
 
@@ -641,14 +813,14 @@ namespace Epic.OnlineServices.Platform
 		/// <see cref="Result.AlreadyConfigured" /> is returned if the function has already been called.
 		/// <see cref="Result.InvalidParameters" /> is returned if the provided options are invalid.
 		/// </returns>
-		public static Result Initialize(InitializeOptions options)
+		public static Result Initialize(ref InitializeOptions options)
 		{
-			var optionsAddress = System.IntPtr.Zero;
-			Helper.TryMarshalSet<InitializeOptionsInternal, InitializeOptions>(ref optionsAddress, options);
+			InitializeOptionsInternal optionsInternal = new InitializeOptionsInternal();
+			optionsInternal.Set(ref options);
 
-			var funcResult = Bindings.EOS_Initialize(optionsAddress);
+			var funcResult = Bindings.EOS_Initialize(ref optionsInternal);
 
-			Helper.TryMarshalDispose(ref optionsAddress);
+			Helper.Dispose(ref optionsInternal);
 
 			return funcResult;
 		}
@@ -666,6 +838,40 @@ namespace Epic.OnlineServices.Platform
 		}
 
 		/// <summary>
+		/// Notify a change in application state.
+		/// Calling SetApplicationStatus must happen before Tick when foregrounding for the cases where we won't get the background notification.
+		/// </summary>
+		/// <param name="newStatus">The new status for the application.</param>
+		/// <returns>
+		/// An <see cref="Result" /> that indicates whether we changed the application status successfully.
+		/// <see cref="Result.Success" /> if the application was changed successfully.
+		/// <see cref="Result.InvalidParameters" /> if the value of NewStatus is invalid.
+		/// <see cref="Result.NotImplemented" /> if <see cref="ApplicationStatus.BackgroundConstrained" /> or <see cref="ApplicationStatus.BackgroundUnconstrained" /> are attempted to be set on platforms that do not have such application states.
+		/// </returns>
+		public Result SetApplicationStatus(ApplicationStatus newStatus)
+		{
+			var funcResult = Bindings.EOS_Platform_SetApplicationStatus(InnerHandle, newStatus);
+
+			return funcResult;
+		}
+
+		/// <summary>
+		/// Notify a change in network state.
+		/// </summary>
+		/// <param name="newStatus">The new network status.</param>
+		/// <returns>
+		/// An <see cref="Result" /> that indicates whether we changed the network status successfully.
+		/// <see cref="Result.Success" /> if the network was changed successfully.
+		/// <see cref="Result.InvalidParameters" /> if the value of NewStatus is invalid.
+		/// </returns>
+		public Result SetNetworkStatus(NetworkStatus newStatus)
+		{
+			var funcResult = Bindings.EOS_Platform_SetNetworkStatus(InnerHandle, newStatus);
+
+			return funcResult;
+		}
+
+		/// <summary>
 		/// Set the override country code that the SDK will send to services which require it.
 		/// This is not currently used for anything internally.
 		/// eos_ecom.h
@@ -676,14 +882,14 @@ namespace Epic.OnlineServices.Platform
 		/// <see cref="Result.Success" /> if the country code was overridden
 		/// <see cref="Result.InvalidParameters" /> if you pass an invalid country code
 		/// </returns>
-		public Result SetOverrideCountryCode(string newCountryCode)
+		public Result SetOverrideCountryCode(Utf8String newCountryCode)
 		{
 			var newCountryCodeAddress = System.IntPtr.Zero;
-			Helper.TryMarshalSet(ref newCountryCodeAddress, newCountryCode);
+			Helper.Set(newCountryCode, ref newCountryCodeAddress);
 
 			var funcResult = Bindings.EOS_Platform_SetOverrideCountryCode(InnerHandle, newCountryCodeAddress);
 
-			Helper.TryMarshalDispose(ref newCountryCodeAddress);
+			Helper.Dispose(ref newCountryCodeAddress);
 
 			return funcResult;
 		}
@@ -699,14 +905,14 @@ namespace Epic.OnlineServices.Platform
 		/// <see cref="Result.Success" /> if the locale code was overridden
 		/// <see cref="Result.InvalidParameters" /> if you pass an invalid locale code
 		/// </returns>
-		public Result SetOverrideLocaleCode(string newLocaleCode)
+		public Result SetOverrideLocaleCode(Utf8String newLocaleCode)
 		{
 			var newLocaleCodeAddress = System.IntPtr.Zero;
-			Helper.TryMarshalSet(ref newLocaleCodeAddress, newLocaleCode);
+			Helper.Set(newLocaleCode, ref newLocaleCodeAddress);
 
 			var funcResult = Bindings.EOS_Platform_SetOverrideLocaleCode(InnerHandle, newLocaleCodeAddress);
 
-			Helper.TryMarshalDispose(ref newLocaleCodeAddress);
+			Helper.Dispose(ref newLocaleCodeAddress);
 
 			return funcResult;
 		}
@@ -731,11 +937,49 @@ namespace Epic.OnlineServices.Platform
 
 		/// <summary>
 		/// Notify the platform instance to do work. This function must be called frequently in order for the services provided by the SDK to properly
-		/// function. For tick-based applications, it is usually desireable to call this once per-tick.
+		/// function. For tick-based applications, it is usually desirable to call this once per-tick.
 		/// </summary>
 		public void Tick()
 		{
 			Bindings.EOS_Platform_Tick(InnerHandle);
+		}
+
+		/// <summary>
+		/// Gets the string representation of an <see cref="ApplicationStatus" /> value.
+		/// 
+		/// Example: <see cref="ToString" />(<see cref="ApplicationStatus.Foreground" />) returns "EOS_AS_Foreground".
+		/// </summary>
+		/// <param name="applicationStatus"><see cref="ApplicationStatus" /> value to get as string.</param>
+		/// <returns>
+		/// Pointer to a static string representing the input enum value.
+		/// The returned string is guaranteed to be non-null, and must not be freed by the application.
+		/// </returns>
+		public static Utf8String ToString(ApplicationStatus applicationStatus)
+		{
+			var funcResult = Bindings.EOS_EApplicationStatus_ToString(applicationStatus);
+
+			Utf8String funcResultReturn;
+			Helper.Get(funcResult, out funcResultReturn);
+			return funcResultReturn;
+		}
+
+		/// <summary>
+		/// Gets the string representation of an <see cref="NetworkStatus" /> value.
+		/// 
+		/// Example: <see cref="ToString" />(<see cref="NetworkStatus.Online" />) returns "EOS_NS_Online".
+		/// </summary>
+		/// <param name="networkStatus"><see cref="NetworkStatus" /> value to get as string.</param>
+		/// <returns>
+		/// Pointer to a static string representing the input enum value.
+		/// The returned string is guaranteed to be non-null, and must not be freed by the application.
+		/// </returns>
+		public static Utf8String ToString(NetworkStatus networkStatus)
+		{
+			var funcResult = Bindings.EOS_ENetworkStatus_ToString(networkStatus);
+
+			Utf8String funcResultReturn;
+			Helper.Get(funcResult, out funcResultReturn);
+			return funcResultReturn;
 		}
 	}
 }
