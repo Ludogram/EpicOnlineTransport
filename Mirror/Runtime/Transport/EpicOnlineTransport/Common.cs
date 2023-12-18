@@ -4,7 +4,6 @@ using Epic.OnlineServices.P2P;
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Runtime.InteropServices;
 using UnityEngine;
 
 namespace EpicTransport {
@@ -12,6 +11,8 @@ namespace EpicTransport {
 
         private PacketReliability[] channels;
         private int internal_ch => channels.Length;
+
+        private byte[] internalReceiveBuffer;
 
         protected enum InternalMessages : byte {
             CONNECT,
@@ -33,9 +34,11 @@ namespace EpicTransport {
 
         protected List<string> deadSockets;
         public bool ignoreAllMessages = false;
+        
+        private P2PInterface p2pInterface;
 
         // Mapping from PacketKey to a List of Packet Lists
-        protected Dictionary<PacketKey, List<List<Packet>>> incomingPackets = new Dictionary<PacketKey, List<List<Packet>>>();
+        protected Dictionary<PacketKey, List<List<Packet>>> incomingPackets;
 
         protected Common(EosTransport transport) {
             channels = transport.Channels;
@@ -48,15 +51,17 @@ namespace EpicTransport {
 
             OnIncomingConnectionRequest += OnNewConnection;
             OnRemoteConnectionClosed += OnConnectFail;
+            
+            p2pInterface = EOSSDKComponent.GetP2PInterface();
 
-            incomingNotificationId = EOSSDKComponent.GetP2PInterface().AddNotifyPeerConnectionRequest(ref addNotifyPeerConnectionRequestOptions,
+            incomingNotificationId = p2pInterface.AddNotifyPeerConnectionRequest(ref addNotifyPeerConnectionRequestOptions,
                 null, OnIncomingConnectionRequest);
 
             AddNotifyPeerConnectionClosedOptions addNotifyPeerConnectionClosedOptions = new AddNotifyPeerConnectionClosedOptions();
             addNotifyPeerConnectionClosedOptions.LocalUserId = EOSSDKComponent.LocalUserProductId;
             addNotifyPeerConnectionClosedOptions.SocketId = null;
 
-            outgoingNotificationId = EOSSDKComponent.GetP2PInterface().AddNotifyPeerConnectionClosed(ref addNotifyPeerConnectionClosedOptions,
+            outgoingNotificationId = p2pInterface.AddNotifyPeerConnectionClosed(ref addNotifyPeerConnectionClosedOptions,
                 null, OnRemoteConnectionClosed);
 
             if (outgoingNotificationId == 0 || incomingNotificationId == 0) {
@@ -66,12 +71,14 @@ namespace EpicTransport {
             incomingPackets = new Dictionary<PacketKey, List<List<Packet>>>();
 
             this.transport = transport;
+            
+            internalReceiveBuffer = new byte[P2PInterface.MaxPacketSize];
 
         }
 
         protected void Dispose() {
-            EOSSDKComponent.GetP2PInterface().RemoveNotifyPeerConnectionRequest(incomingNotificationId);
-            EOSSDKComponent.GetP2PInterface().RemoveNotifyPeerConnectionClosed(outgoingNotificationId);
+            p2pInterface.RemoveNotifyPeerConnectionRequest(incomingNotificationId);
+            p2pInterface.RemoveNotifyPeerConnectionClosed(outgoingNotificationId);
 
             transport.ResetIgnoreMessagesAtStartUpTimer();
         }
@@ -133,7 +140,7 @@ namespace EpicTransport {
 		        RemoteUserId = target,
 		        SocketId = socketId
 	        };
-            EOSSDKComponent.GetP2PInterface().SendPacket(ref sendPacketOptions);
+            p2pInterface.SendPacket(ref sendPacketOptions);
         }
 
 
@@ -147,14 +154,14 @@ namespace EpicTransport {
 		        RemoteUserId = host,
 		        SocketId = socketId
 	        };
-            Result result = EOSSDKComponent.GetP2PInterface().SendPacket(ref sendPacketOptions);
+            Result result = p2pInterface.SendPacket(ref sendPacketOptions);
 
             if(result != Result.Success) {
                 Debug.LogError("Send failed " + result);
             }
         }
 
-        private bool Receive(out ProductUserId clientProductUserId, out SocketId socketId, out byte[] receiveBuffer, byte channel) {
+        private bool Receive(out ProductUserId clientProductUserId, out SocketId socketId, out ArraySegment<byte> receiveBuffer, byte channel) {
             var receivePacketOptions = new ReceivePacketOptions() {
 		        LocalUserId = EOSSDKComponent.LocalUserProductId,
 		        MaxDataSizeBytes = P2PInterface.MaxPacketSize,
@@ -177,14 +184,16 @@ namespace EpicTransport {
             }
 	        
             uint bytesWritten = 0;
-            receiveBuffer = new byte[packetSize];
+            ArraySegment<byte> outData = new (internalReceiveBuffer);
             Result result = EOSSDKComponent.GetP2PInterface().ReceivePacket(
                 ref receivePacketOptions, 
                 out clientProductUserId, 
                 out socketId, 
                 out channel, 
-                new ArraySegment<byte>(receiveBuffer),
+                outData,
                 out bytesWritten);
+
+            receiveBuffer = outData[..(int)bytesWritten];
 
             if (result == Result.Success) {
                 return true;
@@ -223,9 +232,9 @@ namespace EpicTransport {
         public void ReceiveData() {
             try {
                 // Internal Channel, no fragmentation here
-                SocketId socketId = new SocketId();
-                while (transport.enabled && Receive(out ProductUserId clientUserID, out socketId, out byte[] internalMessage, (byte) internal_ch)) {
-                    if (internalMessage.Length == 1) {
+                SocketId socketId;
+                while (transport.enabled && Receive(out ProductUserId clientUserID, out socketId, out var internalMessage, (byte) internal_ch)) {
+                    if (internalMessage.Count == 1) {
                         OnReceiveInternalData((InternalMessages) internalMessage[0], clientUserID, socketId);
                         return; // Wait one frame
                     } else {
@@ -235,7 +244,7 @@ namespace EpicTransport {
 
                 // Insert new packet at the correct location in the incoming queue
                 for (int chNum = 0; chNum < channels.Length; chNum++) {
-                    while (transport.enabled && Receive(out ProductUserId clientUserID, out socketId, out byte[] receiveBuffer, (byte) chNum)) {
+                    while (transport.enabled && Receive(out ProductUserId clientUserID, out socketId, out var receiveBuffer, (byte) chNum)) {
                         PacketKey incomingPacketKey = new PacketKey();
                         incomingPacketKey.productUserId = clientUserID;
                         incomingPacketKey.channel = (byte)chNum;
@@ -246,32 +255,36 @@ namespace EpicTransport {
                         if (!incomingPackets.ContainsKey(incomingPacketKey)) {
                             incomingPackets.Add(incomingPacketKey, new List<List<Packet>>());
                         }
+                        
+                        var incomingPacketList = incomingPackets[incomingPacketKey];
 
-                        int packetListIndex = incomingPackets[incomingPacketKey].Count;
-                        for(int i = 0; i < incomingPackets[incomingPacketKey].Count; i++) {
-                            if(incomingPackets[incomingPacketKey][i][0].id == packet.id) {
+                        int packetListIndex = incomingPacketList.Count;
+                        for(int i = 0; i < incomingPacketList.Count; i++) {
+                            if(incomingPacketList[i][0].id == packet.id) {
                                 packetListIndex = i;
                                 break;
                             }
                         }
                         
-                        if (packetListIndex == incomingPackets[incomingPacketKey].Count) {
-                            incomingPackets[incomingPacketKey].Add(new List<Packet>());
+                        if (packetListIndex == incomingPacketList.Count) {
+                            incomingPacketList.Add(new List<Packet>());
                         }
 
                         int insertionIndex = -1;
 
-                        for (int i = 0; i < incomingPackets[incomingPacketKey][packetListIndex].Count; i++) {
-                            if (incomingPackets[incomingPacketKey][packetListIndex][i].fragment > packet.fragment) {
+                        
+                        var incomingPacketListIndex = incomingPacketList[packetListIndex];
+                        for (int i = 0; i < incomingPacketListIndex.Count; i++) {
+                            if (incomingPacketListIndex[i].fragment > packet.fragment) {
                                 insertionIndex = i;
                                 break;
                             }
                         }
 
                         if (insertionIndex >= 0) {
-                            incomingPackets[incomingPacketKey][packetListIndex].Insert(insertionIndex, packet);
+	                        incomingPacketListIndex.Insert(insertionIndex, packet);
                         } else {
-                            incomingPackets[incomingPacketKey][packetListIndex].Add(packet);
+	                        incomingPacketListIndex.Add(packet);
                         }
                     }
                 }

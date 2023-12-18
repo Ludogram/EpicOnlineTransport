@@ -35,13 +35,18 @@ namespace EpicTransport {
             return array;
         }
 
-        public void FromBytes(byte[] array) {
-            id = BitConverter.ToInt32(array, 0);
-            fragment = BitConverter.ToInt32(array, 4);
-            moreFragments = array[8] == 1;
+        public void FromBytes(ArraySegment<byte> array) {
+	        id = BitConverter.ToInt32(array.AsSpan());
+	        fragment = BitConverter.ToInt32(array.AsSpan(4));
+	        moreFragments = array[8] == 1;
 
-            data = new byte[array.Length - 9];
-            Array.Copy(array, 9, data, 0, data.Length);
+	        data = new byte[array.Count - 9];
+	        
+	        array[9..].CopyTo(data, 0);
+        }
+
+        public void FromBytes(byte[] array) {
+	        FromBytes(new ArraySegment<byte>(array));
         }
     }
 }
