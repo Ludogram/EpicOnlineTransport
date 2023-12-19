@@ -5,7 +5,6 @@ using Epic.OnlineServices.Platform;
 using System;
 using System.Collections;
 using System.Runtime.InteropServices;
-using Ludogram.CategoryConsole;
 #if !DISABLESTEAMWORKS
 using Steamworks;
 #endif
@@ -152,7 +151,7 @@ namespace EpicTransport {
             }
 	        
             instance.platformTickTimer -= Time.deltaTime;
-            instance.EOS.Tick();
+	    instance.EOS.Tick();
         }
 
         // If we're in editor, we should dynamically load and unload the SDK between play sessions.
@@ -169,7 +168,7 @@ namespace EpicTransport {
 
         private IntPtr libraryPointer;
 #endif
-        
+
 #if UNITY_EDITOR_LINUX
         [DllImport("libdl.so", EntryPoint = "dlopen")]
         private static extern IntPtr LoadLibrary(String lpFileName, int flags = 2);   
@@ -278,7 +277,7 @@ namespace EpicTransport {
 			    .Create((encryptedAppTicketResponse, failure) =>
 			    {
 				    if (failure || encryptedAppTicketResponse.m_eResult != EResult.k_EResultOK) {
-					    Dbg.Log("SteamAppTicketResult: failure. Reason: " + encryptedAppTicketResponse.m_eResult, "net", "red", 1, this);
+					    Debug.Log("SteamAppTicketResult: failure. Reason: " + encryptedAppTicketResponse.m_eResult);
 					    _loginFailed = true;
 					    return;
 				    }
@@ -437,12 +436,12 @@ namespace EpicTransport {
 		            DisplayName = displayName
 	            };
             }
-                
+
             loginOptions.Credentials = new Epic.OnlineServices.Connect.Credentials() {
 	            Type = connectInterfaceCredentialType,
 	            Token = connectInterfaceCredentialToken
             };
-            
+
             EOS.GetConnectInterface().Login(ref loginOptions, null, OnConnectInterfaceLogin);
         }
 
@@ -474,6 +473,7 @@ namespace EpicTransport {
         }
 
         private void OnConnectInterfaceLogin(ref Epic.OnlineServices.Connect.LoginCallbackInfo loginCallbackInfo) {
+            Debug.Log("EOS login state: " + loginCallbackInfo.ResultCode);
             if (loginCallbackInfo.ResultCode == Result.Success) {
                 Debug.Log("Connect Interface Login succeeded");
 
@@ -501,7 +501,7 @@ namespace EpicTransport {
                 EOS.GetConnectInterface().CreateUser(ref createUserOptions, null, (ref Epic.OnlineServices.Connect.CreateUserCallbackInfo cb) => {
 		                if (cb.ResultCode != Result.Success) { Debug.Log(cb.ResultCode); return; }
 		                localUserProductId = cb.LocalUserId;
-		                ConnectInterfaceLogin();
+		                ConnectInterfaceLogin();               
 	                });
             }
         }
