@@ -168,7 +168,7 @@ namespace EpicTransport {
 		        RequestedChannel = channel
 	        };
 
-            var getNextReceivedPacketSizeOptions = new GetNextReceivedPacketSizeOptions() {
+            /* var getNextReceivedPacketSizeOptions = new GetNextReceivedPacketSizeOptions() {
 		        LocalUserId = EOSSDKComponent.LocalUserProductId,
 		        RequestedChannel = channel
 	        };
@@ -181,11 +181,11 @@ namespace EpicTransport {
                 clientProductUserId = null;
                 socketId = default;
                 return false;
-            }
+            } */
 	        
             uint bytesWritten = 0;
             ArraySegment<byte> outData = new (internalReceiveBuffer);
-            Result result = EOSSDKComponent.GetP2PInterface().ReceivePacket(
+            Result result = p2pInterface.ReceivePacket(
                 ref receivePacketOptions, 
                 out clientProductUserId, 
                 out socketId, 
@@ -195,7 +195,7 @@ namespace EpicTransport {
 
             receiveBuffer = outData[..(int)bytesWritten];
 
-            if (result == Result.Success) {
+            if (result == Result.Success && receiveBuffer.Count > 0) {
                 return true;
             }
 
@@ -292,36 +292,38 @@ namespace EpicTransport {
                 // Find fully received packets
                 List<List<Packet>> emptyPacketLists = new List<List<Packet>>();
                 foreach(KeyValuePair<PacketKey, List<List<Packet>>> keyValuePair in incomingPackets) {
-                    for(int packetList = 0; packetList < keyValuePair.Value.Count; packetList++) {
-                        bool packetReady = true;
-                        int packetLength = 0;
-                        for (int packet = 0; packet < keyValuePair.Value[packetList].Count; packet++) {
-                            Packet tempPacket = keyValuePair.Value[packetList][packet];
-                            if (tempPacket.fragment != packet || (packet == keyValuePair.Value[packetList].Count - 1 && tempPacket.moreFragments)) {
-                                packetReady = false;
-                            } else {
-                                packetLength += tempPacket.data.Length;
-                            }
-                        }
+                    foreach (var packetList in keyValuePair.Value)
+                    {
+	                    bool packetReady = true;
+	                    int packetLength = 0;
+	                    for (int packet = 0; packet < packetList.Count; packet++) {
+		                    Packet tempPacket = packetList[packet];
+		                    if (tempPacket.fragment != packet || (packet == packetList.Count - 1 && tempPacket.moreFragments)) {
+			                    packetReady = false;
+		                    } else {
+			                    packetLength += tempPacket.data.Length;
+		                    }
+	                    }
 
-                        if (packetReady) {
-                            byte[] data = new byte[packetLength];
-                            int dataIndex = 0;
+	                    if (packetReady) {
+		                    byte[] data = new byte[packetLength];
+		                    int dataIndex = 0;
 
-                            for (int packet = 0; packet < keyValuePair.Value[packetList].Count; packet++) {
-                                Array.Copy(keyValuePair.Value[packetList][packet].data, 0, data, dataIndex, keyValuePair.Value[packetList][packet].data.Length);
-                                dataIndex += keyValuePair.Value[packetList][packet].data.Length;
-                            }
+		                    for (int packet = 0; packet < packetList.Count; packet++) {
+			                    Array.Copy(packetList[packet].data, 0, data, dataIndex, packetList[packet].data.Length);
+			                    dataIndex += packetList[packet].data.Length;
+		                    }
 
-                            OnReceiveData(data, keyValuePair.Key.productUserId, keyValuePair.Key.channel);
+		                    OnReceiveData(data, keyValuePair.Key.productUserId, keyValuePair.Key.channel);
 
-                            if(transport.ServerActive() || transport.ClientActive())
-                                emptyPacketLists.Add(keyValuePair.Value[packetList]);
-                        }
+		                    if(transport.ServerActive() || transport.ClientActive())
+			                    emptyPacketLists.Add(packetList);
+	                    }
                     }
 
-                    for (int i = 0; i < emptyPacketLists.Count; i++) {
-                        keyValuePair.Value.Remove(emptyPacketLists[i]);
+                    foreach (var emptyList in emptyPacketLists)
+                    {
+	                    keyValuePair.Value.Remove(emptyList);
                     }
                     emptyPacketLists.Clear();
                 }

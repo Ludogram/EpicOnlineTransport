@@ -229,7 +229,7 @@ namespace EpicTransport {
         private void Send(int channelId, ArraySegment<byte> segment, int connectionId = int.MinValue) {
             Packet[] packets = GetPacketArray(channelId, segment);
 
-            for(int i  = 0; i < packets.Length; i++) {
+            foreach (var packet in packets) {
                 if (connectionId == int.MinValue) {
                     if (client == null)
                     {
@@ -237,9 +237,9 @@ namespace EpicTransport {
                         return;
                     }
                     
-                    client.Send(packets[i].ToBytes(), channelId);
+                    client.Send(packet.ToBytes(), channelId);
                 } else {
-                    server.SendAll(connectionId, packets[i].ToBytes(), channelId);
+                    server.SendAll(connectionId, packet.ToBytes(), channelId);
                 }
             }
 
