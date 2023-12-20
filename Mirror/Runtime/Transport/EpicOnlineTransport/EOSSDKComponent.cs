@@ -151,7 +151,7 @@ namespace EpicTransport {
             }
 	        
             instance.platformTickTimer -= Time.deltaTime;
-	    instance.EOS.Tick();
+			instance.EOS.Tick();
         }
 
         // If we're in editor, we should dynamically load and unload the SDK between play sessions.
@@ -525,13 +525,13 @@ namespace EpicTransport {
         }
 
         private void OnApplicationQuit() {
-#if !UNITY_EDITOR
+// #if !UNITY_EDITOR
             if (EOS != null) {
                 EOS.Release();
                 EOS = null;
                 PlatformInterface.Shutdown();
             }
-#endif
+// #endif
 
             // Unhook the library in the editor, this makes it possible to load the library again after stopping to play
 #if UNITY_EDITOR
