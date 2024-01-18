@@ -296,6 +296,10 @@ namespace EpicTransport {
 		    var steamAPICall = SteamUser.RequestEncryptedAppTicket(null, 0);
             
 		    _steamAppTicketResult.Set(steamAPICall);
+#else
+            Initialize();
+            connectInterfaceCredentialType = ExternalCredentialType.DeviceidAccessToken;
+            LoginUser();
 #endif
 	    }
 
