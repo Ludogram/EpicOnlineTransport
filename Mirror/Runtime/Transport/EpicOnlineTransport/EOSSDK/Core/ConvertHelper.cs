@@ -1,7 +1,6 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 using System;
-using System.Linq;
 using System.Text;
 
 namespace Epic.OnlineServices
@@ -55,7 +54,8 @@ namespace Epic.OnlineServices
 				return;
 			}
 
-			to = Encoding.ASCII.GetString(from.Take(GetAnsiStringLength(from)).ToArray());
+            var len = GetAnsiStringLength(from);
+			to = Encoding.ASCII.GetString(from[..len]);
 		}
 
 		/// <summary>
@@ -71,7 +71,13 @@ namespace Epic.OnlineServices
 				from = "";
 			}
 
-			to = Encoding.ASCII.GetBytes(new string(from.Take(fromLength).ToArray()).PadRight(fromLength, '\0'));
+            if (fromLength >= from.Length)
+            {
+                to = Encoding.ASCII.GetBytes(from.PadRight(fromLength, '\0'));
+                return;
+            }
+
+			to = Encoding.ASCII.GetBytes(new string(from[..fromLength]).PadRight(fromLength, '\0'));
 		}
 
 		/// <summary>

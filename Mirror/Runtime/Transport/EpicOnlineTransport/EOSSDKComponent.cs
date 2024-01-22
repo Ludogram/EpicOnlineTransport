@@ -5,6 +5,10 @@ using Epic.OnlineServices.Platform;
 using System;
 using System.Collections;
 using System.Runtime.InteropServices;
+using Epic.OnlineServices.Lobby;
+#if UNITY_EDITOR
+using ParrelSync;
+#endif
 #if !DISABLESTEAMWORKS
 using Steamworks;
 #endif
@@ -107,7 +111,8 @@ namespace EpicTransport {
             }
         }
 
-        protected ProductUserId localUserProductId;
+        public static bool IsProductIdExpired { get; private set; } = true;
+        protected ProductUserId localUserProductId = new ProductUserId();
         public static ProductUserId LocalUserProductId {
             get {
                 return Instance.localUserProductId;
@@ -270,14 +275,29 @@ namespace EpicTransport {
 
 	    public void LoginToPlatform()
 	    {
+		    if (!IsProductIdExpired)
+		    {
+			    return;
+		    }
+		    
 		    _loginFailed = false;
 #if !DISABLESTEAMWORKS
+#if UNITY_EDITOR
+	        if (ClonesManager.IsClone())
+            {
+                Initialize();
+                connectInterfaceCredentialType = ExternalCredentialType.DeviceidAccessToken;
+                LoginUser();
+                return;
+            }
+#endif
 	        
 		    _steamAppTicketResult = CallResult<EncryptedAppTicketResponse_t>
 			    .Create((encryptedAppTicketResponse, failure) =>
 			    {
 				    if (failure || encryptedAppTicketResponse.m_eResult != EResult.k_EResultOK) {
 					    Debug.Log("SteamAppTicketResult: failure. Reason: " + encryptedAppTicketResponse.m_eResult);
+					    localUserProductId = new();
 					    _loginFailed = true;
 					    return;
 				    }
@@ -291,6 +311,7 @@ namespace EpicTransport {
 				    connectInterfaceCredentialType = ExternalCredentialType.SteamAppTicket;
 				    SetConnectInterfaceCredentialToken(encryptedAppTicket);
 				    Initialize();
+				    LoginUser();
 			    });
 
 		    var steamAPICall = SteamUser.RequestEncryptedAppTicket(null, 0);
@@ -298,9 +319,83 @@ namespace EpicTransport {
 		    _steamAppTicketResult.Set(steamAPICall);
 #else
             Initialize();
+#if UNITY_EDITOR
+            if (ClonesManager.IsClone())
+            {
+                devAuthToolCredentialName = ClonesManager.GetArgument();
+                connectInterfaceCredentialType = ExternalCredentialType.Epic;
+                authInterfaceCredentialType = Epic.OnlineServices.Auth.LoginCredentialType.Developer;
+                authInterfaceLogin = true;
+            }
+            else
+            {
             connectInterfaceCredentialType = ExternalCredentialType.DeviceidAccessToken;
+            }
+#else
+            connectInterfaceCredentialType = ExternalCredentialType.DeviceidAccessToken;
+#endif
             LoginUser();
 #endif
+	    }
+
+	    public void LeaveAllLobbies()
+	    {
+		    var lobbyInterface = GetLobbyInterface();
+
+		    var createLobbySearchOptions = new CreateLobbySearchOptions
+		    {
+			    MaxResults = LobbyInterface.MaxLobbies
+		    };
+		    lobbyInterface.CreateLobbySearch(ref createLobbySearchOptions, out var lobbySearchHandle);
+		    var setTargetUserIdOptions = new LobbySearchSetTargetUserIdOptions
+		    {
+			    TargetUserId = LocalUserProductId
+		    };
+		    lobbySearchHandle.SetTargetUserId(ref setTargetUserIdOptions);
+		    var findOptions = new LobbySearchFindOptions
+		    {
+			    LocalUserId = LocalUserProductId
+		    };
+		    lobbySearchHandle.Find(ref findOptions, null,
+			    (ref LobbySearchFindCallbackInfo data) =>
+			    {
+				    if (data.ResultCode != Result.Success)
+				    {
+					    Debug.Log("Failed to find lobbies. Should be fine.");
+					    return;
+				    }
+				    var lobbySearchGetSearchResultCountOptions = new LobbySearchGetSearchResultCountOptions();
+				    var count = lobbySearchHandle.GetSearchResultCount(ref lobbySearchGetSearchResultCountOptions);
+
+				    for (int lobbyIndex = 0; lobbyIndex < count; lobbyIndex++)
+				    {
+					    var copySearchOption = new LobbySearchCopySearchResultByIndexOptions
+					    {
+						    LobbyIndex = (uint) lobbyIndex
+					    };
+					    lobbySearchHandle.CopySearchResultByIndex(ref copySearchOption, out var lobbyDetailsHandle);
+					    var copyInfoOptions = new LobbyDetailsCopyInfoOptions();
+					    lobbyDetailsHandle.CopyInfo(ref copyInfoOptions, out var lobbyDetailsInfo);
+					    if (lobbyDetailsInfo.HasValue)
+					    {
+						    var lobbyId = lobbyDetailsInfo.Value.LobbyId;
+						    var leaveLobbyOptions = new LeaveLobbyOptions()
+						    {
+							    LocalUserId = LocalUserProductId,
+							    LobbyId = lobbyId
+						    };
+						    lobbyInterface.LeaveLobby(ref leaveLobbyOptions, null, (ref LeaveLobbyCallbackInfo data) =>
+						    {
+							    if (data.ResultCode != Result.Success)
+							    {
+								    Debug.LogError("Failed to leave lobby");
+								    return;
+							    }
+							    Debug.Log("Left lobby " + data.LobbyId);
+						    });
+					    }
+				    }
+			    });
 	    }
 
         protected void InitializeImplementation() {
@@ -340,22 +435,9 @@ namespace EpicTransport {
             if (EOS == null) {
                 throw new System.Exception("Failed to create platform");
             }
+	}
 
-            if (checkForEpicLauncherAndRestart) {
-                Result result = EOS.CheckForLauncherAndRestart();
-
-                // If not started through epic launcher the app will be restarted and we can quit 
-                if (result != Result.NoChange) {
-
-                    // Log error if launcher check failed, but still quit to prevent hacking
-                    if (result == Result.UnexpectedError) {
-                        Debug.LogError("Unexpected Error while checking if app was started through epic launcher");
-                    }
-
-                    Application.Quit();
-                }
-            }
-
+        private void LoginUser() {
             // If we use the Auth interface then only login into the Connect interface after finishing the auth interface login
             // If we don't use the Auth interface we can directly login to the Connect interface
             if (authInterfaceLogin) {
@@ -389,6 +471,8 @@ namespace EpicTransport {
         }
         public static void Initialize() {
             if (Instance.initialized || Instance.isConnecting) {
+	            if (IsProductIdExpired)
+		            Instance.LoginUser();
                 return;
             }
 
@@ -488,26 +572,48 @@ namespace EpicTransport {
 
                     localUserProductIdString = productIdString;
                     localUserProductId = loginCallbackInfo.LocalUserId;
+                    IsProductIdExpired = false;
+                }
+                
+                if (!initialized)
+                {
+                SetApplicationStatus(true);
+                EOS.SetNetworkStatus(NetworkStatus.Online);
                 }
                 
                 initialized = true;
                 isConnecting = false;
-                
-                SetApplicationStatus(true);
-                EOS.SetNetworkStatus(NetworkStatus.Online);
 
                 var authExpirationOptions = new Epic.OnlineServices.Connect.AddNotifyAuthExpirationOptions();
                 authExpirationHandle = EOS.GetConnectInterface().AddNotifyAuthExpiration(ref authExpirationOptions, null, OnAuthExpiration);
-            } else if (Epic.OnlineServices.Common.IsOperationComplete(loginCallbackInfo.ResultCode)) {
+            }
+            else if (Epic.OnlineServices.Common.IsOperationComplete(loginCallbackInfo.ResultCode)) {
+	            
+	            if (loginCallbackInfo.ContinuanceToken == null)
+	            {
+		            InvalidateConnectLogin();
+		            return;
+	            }
+
                 Debug.Log("Login returned " + loginCallbackInfo.ResultCode + "\nRetrying...");
                 var createUserOptions = new Epic.OnlineServices.Connect.CreateUserOptions()
                     { ContinuanceToken = loginCallbackInfo.ContinuanceToken };
                 EOS.GetConnectInterface().CreateUser(ref createUserOptions, null, (ref Epic.OnlineServices.Connect.CreateUserCallbackInfo cb) => {
 		                if (cb.ResultCode != Result.Success) { Debug.Log(cb.ResultCode); return; }
 		                localUserProductId = cb.LocalUserId;
+		                IsProductIdExpired = false;
+		                Debug.Log("New user created");
 		                ConnectInterfaceLogin();               
 	                });
             }
+        }
+
+        private void InvalidateConnectLogin()
+        {
+	        _loginFailed = true;
+	        IsProductIdExpired = true;
+		            
+	        LoginToPlatform();
         }
         
         private void OnAuthExpiration(ref Epic.OnlineServices.Connect.AuthExpirationCallbackInfo authExpirationCallbackInfo) {
