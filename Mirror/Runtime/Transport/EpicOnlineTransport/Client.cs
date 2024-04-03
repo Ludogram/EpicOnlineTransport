@@ -80,7 +80,7 @@ namespace EpicTransport {
                 Task connectedCompleteTask = connectedComplete.Task;
 
                 if (await Task.WhenAny(connectedCompleteTask, Task.Delay(ConnectionTimeout/*, cancelToken.Token*/)) != connectedCompleteTask) {
-                    Debug.LogError($"Connection to {host} timed out.");
+                    Debug.LogWarning($"EOS: Connection to {host} timed out.");
                     OnConnected -= SetConnectedComplete;
                     OnConnectionFailed(hostProductId);
                 }
@@ -172,12 +172,19 @@ namespace EpicTransport {
                     break;
                 case InternalMessages.DISCONNECT:
                     Connected = false;
-                    Debug.Log("Disconnected.");
+                    Debug.Log("[InternalMessages.DISCONNECT] Disconnected.");
 
                     OnDisconnected.Invoke();
+
+                    CloseConnectionOptions closeOptions = new CloseConnectionOptions {
+                        LocalUserId = EOSSDKComponent.LocalUserProductId,
+                        RemoteUserId = clientUserId,
+                        SocketId = socketId
+                    };
+                    p2pInterface.CloseConnection(ref closeOptions);
                     break;
                 default:
-                    Debug.Log("Received unknown message type");
+                    Debug.Log("Received unknown message type " + (int) type + " from " + clientUserId);
                     break;
             }
         }

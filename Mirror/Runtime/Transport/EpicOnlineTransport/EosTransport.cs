@@ -164,6 +164,10 @@ namespace EpicTransport {
         }
         public bool ClientActive() => client != null;
 
+        public NetworkConnectionType GetClientNetworkType()
+        {
+            return client.NetworkType;
+        }
 
         public override bool ServerActive() => server != null;
         public override void ServerStart() {

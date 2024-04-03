@@ -77,6 +77,13 @@ namespace Epic.OnlineServices
 		#elif EOS_PLATFORM_ANDROID
 			"EOSSDK"
 
+
+		#elif EOS_PLATFORM_SWITCH && EOS_UNITY
+			"EOSSDK-Switch-Shipping"
+		#elif EOS_PLATFORM_SWITCH
+			"EOSSDK-Switch-Shipping.nro"
+			
+
 		#else
 			#error Unable to determine the name of the EOSSDK library. Ensure you have set the correct EOS compilation symbol for the current platform, such as EOS_PLATFORM_WINDOWS_32 or EOS_PLATFORM_WINDOWS_64, so that the correct EOSSDK library can be targeted.
 			"EOSSDK-UnknownPlatform-Shipping"

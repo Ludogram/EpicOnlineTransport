@@ -9,25 +9,23 @@ public class RandomString {
 
         Random random = new Random();
 
-        // Unicode/ASCII Letters are divided into two blocks
+        // Unicode/ASCII Letters/Num are divided into two blocks
         // (Letters 65–90 / 97–122):
-        // The first group containing the uppercase letters and
-        // the second group containing the lowercase.  
 
-        // char is a single Unicode character  
-        char offsetLowerCase = 'a';
-        char offsetUpperCase = 'A';
+        // char is a single Unicode character  =
+        char offsetLetter = 'A';
         const int lettersOffset = 26; // A...Z or a..z: length=26  
+        char offsetNum = '0';
+        const int numOffset = 10; // 0..9: length=10
         
         for (var i = 0; i < size; i++) {
-            char offset;
+            char @char;
             if(random.Next(0,2) == 0) {
-                offset = offsetLowerCase;
+                @char = (char) random.Next(offsetLetter, offsetLetter + lettersOffset);
             } else {
-                offset = offsetUpperCase;
+                @char = (char) random.Next(offsetNum, offsetNum + numOffset);
             }
 
-            var @char = (char) random.Next(offset, offset + lettersOffset);
             builder.Append(@char);
         }
 

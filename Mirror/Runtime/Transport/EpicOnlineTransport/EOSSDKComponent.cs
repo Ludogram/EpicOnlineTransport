@@ -201,8 +201,21 @@ namespace EpicTransport {
 #endif
         
 #if UNITY_EDITOR_OSX
-        [DllImport("libdl.dylib", EntryPoint = "dlopen")]
-        private static extern IntPtr LoadLibrary(String lpFileName, int flags = 2);
+        [DllImport("libdl.dylib")]
+        private static extern IntPtr dlopen(String lpFileName, int flags = 2);
+
+        private static IntPtr LoadLibrary(String lpFileName, int flags = 2)
+        {
+            var addr = dlopen(lpFileName, flags);
+            if (addr == IntPtr.Zero)
+            {
+                // Not using NanosmgException because it depends on nn_errno.
+                var error = Marshal.PtrToStringAnsi(dlerror());
+                throw new Exception("dlopen failed: " + lpFileName + " : " + error);
+            }
+
+            return addr;
+        }
 
         [DllImport("libdl.dylib", EntryPoint = "dlclose")]
         private static extern int FreeLibrary(IntPtr hLibModule);
@@ -249,7 +262,7 @@ namespace EpicTransport {
             instance = this;
             DontDestroyOnLoad(gameObject);
 
-#if UNITY_EDITOR
+#if UNITY_EDITOR && !UNITY_EDITOR_OSX
             var libraryPath = "Assets/Plugins/Epic/EpicOnlineTransport/EOSSDK/" + Config.LibraryName;
 
             libraryPointer = LoadLibrary(libraryPath);
@@ -318,6 +331,7 @@ namespace EpicTransport {
             
 		    _steamAppTicketResult.Set(steamAPICall);
 #else
+
             Initialize();
 #if UNITY_EDITOR
             if (ClonesManager.IsClone())
@@ -340,6 +354,7 @@ namespace EpicTransport {
 
 	    public void LeaveAllLobbies()
 	    {
+            if (!Initialized) return;
 		    var lobbyInterface = GetLobbyInterface();
 
 		    var createLobbySearchOptions = new CreateLobbySearchOptions
@@ -378,21 +393,12 @@ namespace EpicTransport {
 					    lobbyDetailsHandle.CopyInfo(ref copyInfoOptions, out var lobbyDetailsInfo);
 					    if (lobbyDetailsInfo.HasValue)
 					    {
-						    var lobbyId = lobbyDetailsInfo.Value.LobbyId;
-						    var leaveLobbyOptions = new LeaveLobbyOptions()
+                            var lobby = new EosLobby
 						    {
-							    LocalUserId = LocalUserProductId,
-							    LobbyId = lobbyId
+                                LobbyId = lobbyDetailsInfo.Value.LobbyId
 						    };
-						    lobbyInterface.LeaveLobby(ref leaveLobbyOptions, null, (ref LeaveLobbyCallbackInfo data) =>
-						    {
-							    if (data.ResultCode != Result.Success)
-							    {
-								    Debug.LogError("Failed to leave lobby");
-								    return;
-							    }
-							    Debug.Log("Left lobby " + data.LobbyId);
-						    });
+                            
+                            lobby.Leave();
 					    }
 				    }
 			    });
@@ -400,7 +406,6 @@ namespace EpicTransport {
 
         protected void InitializeImplementation() {
             isConnecting = true;
-
             var initializeOptions = new InitializeOptions() {
                 ProductName = apiKeys.epicProductName,
                 ProductVersion = apiKeys.epicProductVersion
@@ -467,7 +472,6 @@ namespace EpicTransport {
                     ConnectInterfaceLogin();
                 }
             }
-
         }
         public static void Initialize() {
             if (Instance.initialized || Instance.isConnecting) {
@@ -644,12 +648,13 @@ namespace EpicTransport {
 // #endif
 
             // Unhook the library in the editor, this makes it possible to load the library again after stopping to play
-#if UNITY_EDITOR
+#if UNITY_EDITOR && !UNITY_EDITOR_OSX
             if (libraryPointer != IntPtr.Zero) {
                 Bindings.Unhook();
 
+                var counter = 0;
                 // Free until the module ref count is 0
-                while (FreeLibrary(libraryPointer) != 0) { }
+                while (FreeLibrary(libraryPointer) != 0 && counter < 300) { counter++; }
 
                 libraryPointer = IntPtr.Zero;
             }
