@@ -9,7 +9,7 @@ using Epic.OnlineServices.Lobby;
 #if UNITY_EDITOR
 using ParrelSync;
 #endif
-#if !DISABLESTEAMWORKS
+#if !DISABLESTEAMWORKS && STEAMWORKS_NET
 using Steamworks;
 #endif
 using UnityEngine;
@@ -278,7 +278,7 @@ namespace EpicTransport {
             }
         }
 
-#if !DISABLESTEAMWORKS
+#if !DISABLESTEAMWORKS && STEAMWORKS_NET
         // Steam Auth
         private CallResult<EncryptedAppTicketResponse_t> _steamAppTicketResult;
 #endif
@@ -294,7 +294,7 @@ namespace EpicTransport {
 		    }
 		    
 		    _loginFailed = false;
-#if !DISABLESTEAMWORKS
+#if !DISABLESTEAMWORKS && STEAMWORKS_NET
 #if UNITY_EDITOR
 	        if (ClonesManager.IsClone())
             {
