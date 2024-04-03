@@ -263,7 +263,7 @@ namespace EpicTransport {
             DontDestroyOnLoad(gameObject);
 
 #if UNITY_EDITOR && !UNITY_EDITOR_OSX
-            var libraryPath = "Assets/Plugins/Epic/EpicOnlineTransport/EOSSDK/" + Config.LibraryName;
+            var libraryPath = "Assets/Plugins/EpicOnlineTransport/Mirror/Runtime/Transport/EpicOnlineTransport/EOSSDK/" + Config.LibraryName;
 
             libraryPointer = LoadLibrary(libraryPath);
             if (libraryPointer == IntPtr.Zero) {
@@ -581,8 +581,8 @@ namespace EpicTransport {
                 
                 if (!initialized)
                 {
-                SetApplicationStatus(true);
-                EOS.SetNetworkStatus(NetworkStatus.Online);
+                    SetApplicationStatus(true);
+                    EOS.SetNetworkStatus(NetworkStatus.Online);
                 }
                 
                 initialized = true;
