@@ -6,7 +6,7 @@ using System;
 using System.Collections;
 using System.Runtime.InteropServices;
 using Epic.OnlineServices.Lobby;
-#if UNITY_EDITOR
+#if UNITY_EDITOR && PARRELSYNC
 using ParrelSync;
 #endif
 #if !DISABLESTEAMWORKS && STEAMWORKS_NET
@@ -295,7 +295,7 @@ namespace EpicTransport {
 		    
 		    _loginFailed = false;
 #if !DISABLESTEAMWORKS && STEAMWORKS_NET
-#if UNITY_EDITOR
+#if UNITY_EDITOR && PARRELSYNC
 	        if (ClonesManager.IsClone())
             {
                 Initialize();
@@ -333,7 +333,7 @@ namespace EpicTransport {
 #else
 
             Initialize();
-#if UNITY_EDITOR
+#if UNITY_EDITOR && PARRELSYNC
             if (ClonesManager.IsClone())
             {
                 devAuthToolCredentialName = ClonesManager.GetArgument();
