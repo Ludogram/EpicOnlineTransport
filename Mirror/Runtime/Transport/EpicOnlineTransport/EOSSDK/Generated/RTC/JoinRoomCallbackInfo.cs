@@ -6,7 +6,7 @@ namespace Epic.OnlineServices.RTC
 	/// <summary>
 	/// This struct is passed in with a call to <see cref="OnJoinRoomCallback" />.
 	/// </summary>
-	public class JoinRoomCallbackInfo : ICallbackInfo, ISettable
+	public struct JoinRoomCallbackInfo : ICallbackInfo
 	{
 		/// <summary>
 		/// This returns:
@@ -17,58 +17,63 @@ namespace Epic.OnlineServices.RTC
 		/// <see cref="Result.AccessDenied" />: if the room name belongs to the Lobby voice system (not retryable).
 		/// <see cref="Result.UnexpectedError" /> otherwise (retryable).
 		/// </summary>
-		public Result ResultCode { get; private set; }
+		public Result ResultCode { get; set; }
 
 		/// <summary>
 		/// Client-specified data passed into <see cref="RTCInterface.JoinRoom" />.
 		/// </summary>
-		public object ClientData { get; private set; }
+		public object ClientData { get; set; }
 
 		/// <summary>
 		/// The Product User ID of the user who initiated this request.
 		/// </summary>
-		public ProductUserId LocalUserId { get; private set; }
+		public ProductUserId LocalUserId { get; set; }
 
 		/// <summary>
 		/// The room the user was trying to join.
 		/// </summary>
-		public string RoomName { get; private set; }
+		public Utf8String RoomName { get; set; }
+
+		/// <summary>
+		/// The room option items.
+		/// </summary>
+		public Option[] RoomOptions { get; set; }
 
 		public Result? GetResultCode()
 		{
 			return ResultCode;
 		}
 
-		internal void Set(JoinRoomCallbackInfoInternal? other)
+		internal void Set(ref JoinRoomCallbackInfoInternal other)
 		{
-			if (other != null)
-			{
-				ResultCode = other.Value.ResultCode;
-				ClientData = other.Value.ClientData;
-				LocalUserId = other.Value.LocalUserId;
-				RoomName = other.Value.RoomName;
-			}
-		}
-
-		public void Set(object other)
-		{
-			Set(other as JoinRoomCallbackInfoInternal?);
+			ResultCode = other.ResultCode;
+			ClientData = other.ClientData;
+			LocalUserId = other.LocalUserId;
+			RoomName = other.RoomName;
+			RoomOptions = other.RoomOptions;
 		}
 	}
 
 	[System.Runtime.InteropServices.StructLayout(System.Runtime.InteropServices.LayoutKind.Sequential, Pack = 8)]
-	internal struct JoinRoomCallbackInfoInternal : ICallbackInfoInternal
+	internal struct JoinRoomCallbackInfoInternal : ICallbackInfoInternal, IGettable<JoinRoomCallbackInfo>, ISettable<JoinRoomCallbackInfo>, System.IDisposable
 	{
 		private Result m_ResultCode;
 		private System.IntPtr m_ClientData;
 		private System.IntPtr m_LocalUserId;
 		private System.IntPtr m_RoomName;
+		private uint m_RoomOptionsCount;
+		private System.IntPtr m_RoomOptions;
 
 		public Result ResultCode
 		{
 			get
 			{
 				return m_ResultCode;
+			}
+
+			set
+			{
+				m_ResultCode = value;
 			}
 		}
 
@@ -77,8 +82,13 @@ namespace Epic.OnlineServices.RTC
 			get
 			{
 				object value;
-				Helper.TryMarshalGet(m_ClientData, out value);
+				Helper.Get(m_ClientData, out value);
 				return value;
+			}
+
+			set
+			{
+				Helper.Set(value, ref m_ClientData);
 			}
 		}
 
@@ -95,19 +105,79 @@ namespace Epic.OnlineServices.RTC
 			get
 			{
 				ProductUserId value;
-				Helper.TryMarshalGet(m_LocalUserId, out value);
+				Helper.Get(m_LocalUserId, out value);
 				return value;
+			}
+
+			set
+			{
+				Helper.Set(value, ref m_LocalUserId);
 			}
 		}
 
-		public string RoomName
+		public Utf8String RoomName
 		{
 			get
 			{
-				string value;
-				Helper.TryMarshalGet(m_RoomName, out value);
+				Utf8String value;
+				Helper.Get(m_RoomName, out value);
 				return value;
 			}
+
+			set
+			{
+				Helper.Set(value, ref m_RoomName);
+			}
+		}
+
+		public Option[] RoomOptions
+		{
+			get
+			{
+				Option[] value;
+				Helper.Get<OptionInternal, Option>(m_RoomOptions, out value, m_RoomOptionsCount);
+				return value;
+			}
+
+			set
+			{
+				Helper.Set<Option, OptionInternal>(ref value, ref m_RoomOptions, out m_RoomOptionsCount);
+			}
+		}
+
+		public void Set(ref JoinRoomCallbackInfo other)
+		{
+			ResultCode = other.ResultCode;
+			ClientData = other.ClientData;
+			LocalUserId = other.LocalUserId;
+			RoomName = other.RoomName;
+			RoomOptions = other.RoomOptions;
+		}
+
+		public void Set(ref JoinRoomCallbackInfo? other)
+		{
+			if (other.HasValue)
+			{
+				ResultCode = other.Value.ResultCode;
+				ClientData = other.Value.ClientData;
+				LocalUserId = other.Value.LocalUserId;
+				RoomName = other.Value.RoomName;
+				RoomOptions = other.Value.RoomOptions;
+			}
+		}
+
+		public void Dispose()
+		{
+			Helper.Dispose(ref m_ClientData);
+			Helper.Dispose(ref m_LocalUserId);
+			Helper.Dispose(ref m_RoomName);
+			Helper.Dispose(ref m_RoomOptions);
+		}
+
+		public void Get(out JoinRoomCallbackInfo output)
+		{
+			output = new JoinRoomCallbackInfo();
+			output.Set(ref this);
 		}
 	}
 }

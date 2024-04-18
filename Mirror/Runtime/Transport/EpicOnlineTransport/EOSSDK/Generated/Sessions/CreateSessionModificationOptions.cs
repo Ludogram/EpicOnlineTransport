@@ -6,17 +6,17 @@ namespace Epic.OnlineServices.Sessions
 	/// <summary>
 	/// Input parameters for the <see cref="SessionsInterface.CreateSessionModification" /> function.
 	/// </summary>
-	public class CreateSessionModificationOptions
+	public struct CreateSessionModificationOptions
 	{
 		/// <summary>
 		/// Name of the session to create
 		/// </summary>
-		public string SessionName { get; set; }
+		public Utf8String SessionName { get; set; }
 
 		/// <summary>
 		/// Bucket ID associated with the session
 		/// </summary>
-		public string BucketId { get; set; }
+		public Utf8String BucketId { get; set; }
 
 		/// <summary>
 		/// Maximum number of players allowed in the session
@@ -29,13 +29,13 @@ namespace Epic.OnlineServices.Sessions
 		public ProductUserId LocalUserId { get; set; }
 
 		/// <summary>
+		/// Determines whether or not this session should be the one associated with the local user's presence information.
 		/// If true, this session will be associated with presence. Only one session at a time can have this flag true.
 		/// This affects the ability of the Social Overlay to show game related actions to take in the user's social graph.
-		/// 
-		/// @note The Social Overlay can handle only one of the following three options at a time:
+		/// The Social Overlay can handle only one of the following three options at a time:
 		/// using the bPresenceEnabled flags within the Sessions interface
 		/// using the bPresenceEnabled flags within the Lobby interface
-		/// using <see cref="Presence.PresenceModification.SetJoinInfo" />
+		/// using EOS_PresenceModification_SetJoinInfo
 		/// <seealso cref="Presence.PresenceModificationSetJoinInfoOptions" />
 		/// <seealso cref="Lobby.CreateLobbyOptions" />
 		/// <seealso cref="Lobby.JoinLobbyOptions" />
@@ -48,11 +48,24 @@ namespace Epic.OnlineServices.Sessions
 		/// If not specified the backend service will assign one to the session. Do not mix and match.
 		/// This value can be of size [<see cref="SessionModification.SessionmodificationMinSessionidoverrideLength" />, <see cref="SessionModification.SessionmodificationMaxSessionidoverrideLength" />]
 		/// </summary>
-		public string SessionId { get; set; }
+		public Utf8String SessionId { get; set; }
+
+		/// <summary>
+		/// If true, sanctioned players can neither join nor register with this session and, in the case of join,
+		/// will return <see cref="Result" /> code <see cref="Result.SessionsPlayerSanctioned" />
+		/// </summary>
+		public bool SanctionsEnabled { get; set; }
+
+		/// <summary>
+		/// Array of platform IDs indicating the player platforms allowed to register with the session. Platform IDs are
+		/// found in the EOS header file, e.g. <see cref="Common.OptEpic" />. For some platforms, the value will be in the EOS Platform specific
+		/// header file. If null, the session will be unrestricted.
+		/// </summary>
+		public uint[] AllowedPlatformIds { get; set; }
 	}
 
 	[System.Runtime.InteropServices.StructLayout(System.Runtime.InteropServices.LayoutKind.Sequential, Pack = 8)]
-	internal struct CreateSessionModificationOptionsInternal : ISettable, System.IDisposable
+	internal struct CreateSessionModificationOptionsInternal : ISettable<CreateSessionModificationOptions>, System.IDisposable
 	{
 		private int m_ApiVersion;
 		private System.IntPtr m_SessionName;
@@ -61,20 +74,23 @@ namespace Epic.OnlineServices.Sessions
 		private System.IntPtr m_LocalUserId;
 		private int m_PresenceEnabled;
 		private System.IntPtr m_SessionId;
+		private int m_SanctionsEnabled;
+		private System.IntPtr m_AllowedPlatformIds;
+		private uint m_AllowedPlatformIdsCount;
 
-		public string SessionName
+		public Utf8String SessionName
 		{
 			set
 			{
-				Helper.TryMarshalSet(ref m_SessionName, value);
+				Helper.Set(value, ref m_SessionName);
 			}
 		}
 
-		public string BucketId
+		public Utf8String BucketId
 		{
 			set
 			{
-				Helper.TryMarshalSet(ref m_BucketId, value);
+				Helper.Set(value, ref m_BucketId);
 			}
 		}
 
@@ -90,7 +106,7 @@ namespace Epic.OnlineServices.Sessions
 		{
 			set
 			{
-				Helper.TryMarshalSet(ref m_LocalUserId, value);
+				Helper.Set(value, ref m_LocalUserId);
 			}
 		}
 
@@ -98,43 +114,70 @@ namespace Epic.OnlineServices.Sessions
 		{
 			set
 			{
-				Helper.TryMarshalSet(ref m_PresenceEnabled, value);
+				Helper.Set(value, ref m_PresenceEnabled);
 			}
 		}
 
-		public string SessionId
+		public Utf8String SessionId
 		{
 			set
 			{
-				Helper.TryMarshalSet(ref m_SessionId, value);
+				Helper.Set(value, ref m_SessionId);
 			}
 		}
 
-		public void Set(CreateSessionModificationOptions other)
+		public bool SanctionsEnabled
 		{
-			if (other != null)
+			set
+			{
+				Helper.Set(value, ref m_SanctionsEnabled);
+			}
+		}
+
+		public uint[] AllowedPlatformIds
+		{
+			set
+			{
+				Helper.Set(value, ref m_AllowedPlatformIds, out m_AllowedPlatformIdsCount);
+			}
+		}
+
+		public void Set(ref CreateSessionModificationOptions other)
+		{
+			m_ApiVersion = SessionsInterface.CreatesessionmodificationApiLatest;
+			SessionName = other.SessionName;
+			BucketId = other.BucketId;
+			MaxPlayers = other.MaxPlayers;
+			LocalUserId = other.LocalUserId;
+			PresenceEnabled = other.PresenceEnabled;
+			SessionId = other.SessionId;
+			SanctionsEnabled = other.SanctionsEnabled;
+			AllowedPlatformIds = other.AllowedPlatformIds;
+		}
+
+		public void Set(ref CreateSessionModificationOptions? other)
+		{
+			if (other.HasValue)
 			{
 				m_ApiVersion = SessionsInterface.CreatesessionmodificationApiLatest;
-				SessionName = other.SessionName;
-				BucketId = other.BucketId;
-				MaxPlayers = other.MaxPlayers;
-				LocalUserId = other.LocalUserId;
-				PresenceEnabled = other.PresenceEnabled;
-				SessionId = other.SessionId;
+				SessionName = other.Value.SessionName;
+				BucketId = other.Value.BucketId;
+				MaxPlayers = other.Value.MaxPlayers;
+				LocalUserId = other.Value.LocalUserId;
+				PresenceEnabled = other.Value.PresenceEnabled;
+				SessionId = other.Value.SessionId;
+				SanctionsEnabled = other.Value.SanctionsEnabled;
+				AllowedPlatformIds = other.Value.AllowedPlatformIds;
 			}
-		}
-
-		public void Set(object other)
-		{
-			Set(other as CreateSessionModificationOptions);
 		}
 
 		public void Dispose()
 		{
-			Helper.TryMarshalDispose(ref m_SessionName);
-			Helper.TryMarshalDispose(ref m_BucketId);
-			Helper.TryMarshalDispose(ref m_LocalUserId);
-			Helper.TryMarshalDispose(ref m_SessionId);
+			Helper.Dispose(ref m_SessionName);
+			Helper.Dispose(ref m_BucketId);
+			Helper.Dispose(ref m_LocalUserId);
+			Helper.Dispose(ref m_SessionId);
+			Helper.Dispose(ref m_AllowedPlatformIds);
 		}
 	}
 }

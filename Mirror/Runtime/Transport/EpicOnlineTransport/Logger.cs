@@ -10,6 +10,8 @@ namespace EpicTransport {
         public static void EpicDebugLog(LogMessage message) {
             switch (message.Level) {
                 case LogLevel.Info:
+                case LogLevel.Verbose:
+                case LogLevel.VeryVerbose:
                     Debug.Log($"Epic Manager: Category - {message.Category} Message - {message.Message}");
                     break;
                 case LogLevel.Error:

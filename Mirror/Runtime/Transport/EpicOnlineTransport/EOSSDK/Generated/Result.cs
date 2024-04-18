@@ -166,6 +166,14 @@ namespace Epic.OnlineServices
 		/// </summary>
 		RequestInProgress = 39,
 		/// <summary>
+		/// Application is suspended
+		/// </summary>
+		ApplicationSuspended = 40,
+		/// <summary>
+		/// Network is disconnected
+		/// </summary>
+		NetworkDisconnected = 41,
+		/// <summary>
 		/// Account locked due to login failures
 		/// </summary>
 		AuthAccountLocked = 1001,
@@ -234,6 +242,14 @@ namespace Epic.OnlineServices
 		/// </summary>
 		AuthAccountFeatureRestricted = 1017,
 		/// <summary>
+		/// The overlay failed to load the Account Portal. This can range from general overlay failure, to overlay failed to connect to the web server, to overlay failed to render the web page.
+		/// </summary>
+		AuthAccountPortalLoadError = 1018,
+		/// <summary>
+		/// An attempted login has failed due to the user needing to take corrective action on their account.
+		/// </summary>
+		AuthCorrectiveActionRequired = 1019,
+		/// <summary>
 		/// Pin grant code initiated
 		/// </summary>
 		AuthPinGrantCode = 1020,
@@ -284,7 +300,7 @@ namespace Epic.OnlineServices
 		/// <summary>
 		/// The account has been disabled and cannot be used for authentication
 		/// </summary>
-		AuthPersistentAuthAccountNotActive = 1050,
+		AuthAccountNotActive = 1050,
 		/// <summary>
 		/// MFA challenge required
 		/// </summary>
@@ -297,6 +313,10 @@ namespace Epic.OnlineServices
 		/// Korea real ID association required but missing
 		/// </summary>
 		AuthNoRealId = 1080,
+		/// <summary>
+		/// Silent login failed when <see cref="Auth.LoginFlags.NoUserInterface" /> was specified, and user interaction is needed before the user can be logged in.
+		/// </summary>
+		AuthUserInterfaceRequired = 1090,
 		/// <summary>
 		/// An outgoing friend invitation is awaiting acceptance; sending another invite to the same user is erroneous
 		/// </summary>
@@ -386,6 +406,10 @@ namespace Epic.OnlineServices
 		/// </summary>
 		EcomCheckoutLoadError = 4004,
 		/// <summary>
+		/// The player closed the purchase flow overlay after clicking the purchase button. The purchase may still go through, and the game needs to query unredeemed entitlements for a short time.
+		/// </summary>
+		EcomPurchaseProcessing = 4005,
+		/// <summary>
 		/// Session is already in progress
 		/// </summary>
 		SessionsSessionInProgress = 5000,
@@ -462,6 +486,10 @@ namespace Epic.OnlineServices
 		/// </summary>
 		SessionsNotAllowed = 5018,
 		/// <summary>
+		/// Session operation not allowed
+		/// </summary>
+		SessionsPlayerSanctioned = 5019,
+		/// <summary>
 		/// Request filename was invalid
 		/// </summary>
 		PlayerDataStorageFilenameInvalid = 6000,
@@ -510,7 +538,7 @@ namespace Epic.OnlineServices
 		/// </summary>
 		PlayerDataStorageEncryptionKeyNotSet = 6011,
 		/// <summary>
-		/// User data callback returned error (<see cref="PlayerDataStorage.WriteResult" />::<see cref="PlayerDataStorage.WriteResult.FailRequest" /> or <see cref="PlayerDataStorage.ReadResult" />::<see cref="PlayerDataStorage.ReadResult.FailRequest" />)
+		/// User data callback returned error (<see cref="PlayerDataStorage.WriteResult.FailRequest" /> or <see cref="PlayerDataStorage.ReadResult.FailRequest" />)
 		/// </summary>
 		PlayerDataStorageUserErrorFromDataCallback = 6012,
 		/// <summary>
@@ -638,6 +666,14 @@ namespace Epic.OnlineServices
 		/// </summary>
 		LobbyPresenceLobbyExists = 9018,
 		/// <summary>
+		/// Operation requires lobby with voice enabled
+		/// </summary>
+		LobbyVoiceNotEnabled = 9019,
+		/// <summary>
+		/// The client platform does not match the allowed platform list for the lobby.
+		/// </summary>
+		LobbyPlatformNotAllowed = 9020,
+		/// <summary>
 		/// User callback that receives data from storage returned error.
 		/// </summary>
 		TitleStorageUserErrorFromDataCallback = 10000,
@@ -722,7 +758,7 @@ namespace Epic.OnlineServices
 		/// </summary>
 		ModsUnsupportedOS = 11016,
 		/// <summary>
-		/// The anti-cheat client protection is not available. Check that the game was started using the correct launcher.
+		/// The anti-cheat client protection is not available. Check that the game was started using the anti-cheat bootstrapper.
 		/// </summary>
 		AntiCheatClientProtectionNotAvailable = 12000,
 		/// <summary>
@@ -762,6 +798,14 @@ namespace Epic.OnlineServices
 		/// </summary>
 		AntiCheatPeerNotProtected = 12009,
 		/// <summary>
+		/// The DeploymentId provided to the anti-cheat client helper executable does not match what was used to initialize the EOS SDK
+		/// </summary>
+		AntiCheatClientDeploymentIdMismatch = 12010,
+		/// <summary>
+		/// EOS Connect DeviceID auth method is not supported for anti-cheat
+		/// </summary>
+		AntiCheatDeviceIdAuthIsNotSupported = 12011,
+		/// <summary>
 		/// EOS RTC room cannot accept more participants
 		/// </summary>
 		TooManyParticipants = 13000,
@@ -786,6 +830,14 @@ namespace Epic.OnlineServices
 		/// </summary>
 		ReconnectionTimegateExpired = 13005,
 		/// <summary>
+		/// EOS RTC room was left due to platform release
+		/// </summary>
+		ShutdownInvoked = 13006,
+		/// <summary>
+		/// EOS RTC operation failed because the user is in the local user's block list
+		/// </summary>
+		UserIsInBlocklist = 13007,
+		/// <summary>
 		/// The number of available Snapshot IDs have all been exhausted.
 		/// </summary>
 		ProgressionSnapshotSnapshotIdUnavailable = 14000,
@@ -801,6 +853,58 @@ namespace Epic.OnlineServices
 		/// EOS Android VM not stored
 		/// </summary>
 		AndroidJavaVMNotStored = 17000,
+		/// <summary>
+		/// Patch required before the user can use the privilege
+		/// </summary>
+		PermissionRequiredPatchAvailable = 18000,
+		/// <summary>
+		/// System update required before the user can use the privilege
+		/// </summary>
+		PermissionRequiredSystemUpdate = 18001,
+		/// <summary>
+		/// Parental control failure usually
+		/// </summary>
+		PermissionAgeRestrictionFailure = 18002,
+		/// <summary>
+		/// Premium Account Subscription required but not available
+		/// </summary>
+		PermissionAccountTypeFailure = 18003,
+		/// <summary>
+		/// User restricted from chat
+		/// </summary>
+		PermissionChatRestriction = 18004,
+		/// <summary>
+		/// User restricted from User Generated Content
+		/// </summary>
+		PermissionUGCRestriction = 18005,
+		/// <summary>
+		/// Online play is restricted
+		/// </summary>
+		PermissionOnlinePlayRestricted = 18006,
+		/// <summary>
+		/// The application was not launched through the Bootstrapper. Desktop crossplay functionality is unavailable.
+		/// </summary>
+		DesktopCrossplayApplicationNotBootstrapped = 19000,
+		/// <summary>
+		/// The redistributable service is not installed.
+		/// </summary>
+		DesktopCrossplayServiceNotInstalled = 19001,
+		/// <summary>
+		/// The desktop crossplay service failed to start.
+		/// </summary>
+		DesktopCrossplayServiceStartFailed = 19002,
+		/// <summary>
+		/// The desktop crossplay service is no longer running for an unknown reason.
+		/// </summary>
+		DesktopCrossplayServiceNotRunning = 19003,
+		/// <summary>
+		/// When sending the custom invite failed.
+		/// </summary>
+		CustomInvitesInviteFailed = 20000,
+		/// <summary>
+		/// The best display name could not be safely determined.
+		/// </summary>
+		UserInfoBestDisplayNameIndeterminate = 22000,
 		/// <summary>
 		/// An unexpected error that we cannot identify has occurred.
 		/// </summary>

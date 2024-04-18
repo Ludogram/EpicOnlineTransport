@@ -6,7 +6,7 @@ namespace Epic.OnlineServices.Platform
 	/// <summary>
 	/// Platform RTC options.
 	/// </summary>
-	public class RTCOptions : ISettable
+	public struct RTCOptions
 	{
 		/// <summary>
 		/// This field is for platform specific initialization if any.
@@ -16,25 +16,24 @@ namespace Epic.OnlineServices.Platform
 		/// </summary>
 		public System.IntPtr PlatformSpecificOptions { get; set; }
 
-		internal void Set(RTCOptionsInternal? other)
-		{
-			if (other != null)
-			{
-				PlatformSpecificOptions = other.Value.PlatformSpecificOptions;
-			}
-		}
+		/// <summary>
+		/// Configures RTC behavior upon entering to any background application statuses
+		/// </summary>
+		public RTCBackgroundMode BackgroundMode { get; set; }
 
-		public void Set(object other)
+		internal void Set(ref RTCOptionsInternal other)
 		{
-			Set(other as RTCOptionsInternal?);
+			PlatformSpecificOptions = other.PlatformSpecificOptions;
+			BackgroundMode = other.BackgroundMode;
 		}
 	}
 
 	[System.Runtime.InteropServices.StructLayout(System.Runtime.InteropServices.LayoutKind.Sequential, Pack = 8)]
-	internal struct RTCOptionsInternal : ISettable, System.IDisposable
+	internal struct RTCOptionsInternal : IGettable<RTCOptions>, ISettable<RTCOptions>, System.IDisposable
 	{
 		private int m_ApiVersion;
 		private System.IntPtr m_PlatformSpecificOptions;
+		private RTCBackgroundMode m_BackgroundMode;
 
 		public System.IntPtr PlatformSpecificOptions
 		{
@@ -49,23 +48,45 @@ namespace Epic.OnlineServices.Platform
 			}
 		}
 
-		public void Set(RTCOptions other)
+		public RTCBackgroundMode BackgroundMode
 		{
-			if (other != null)
+			get
 			{
-				m_ApiVersion = PlatformInterface.RtcoptionsApiLatest;
-				PlatformSpecificOptions = other.PlatformSpecificOptions;
+				return m_BackgroundMode;
+			}
+
+			set
+			{
+				m_BackgroundMode = value;
 			}
 		}
 
-		public void Set(object other)
+		public void Set(ref RTCOptions other)
 		{
-			Set(other as RTCOptions);
+			m_ApiVersion = PlatformInterface.RtcoptionsApiLatest;
+			PlatformSpecificOptions = other.PlatformSpecificOptions;
+			BackgroundMode = other.BackgroundMode;
+		}
+
+		public void Set(ref RTCOptions? other)
+		{
+			if (other.HasValue)
+			{
+				m_ApiVersion = PlatformInterface.RtcoptionsApiLatest;
+				PlatformSpecificOptions = other.Value.PlatformSpecificOptions;
+				BackgroundMode = other.Value.BackgroundMode;
+			}
 		}
 
 		public void Dispose()
 		{
-			Helper.TryMarshalDispose(ref m_PlatformSpecificOptions);
+			Helper.Dispose(ref m_PlatformSpecificOptions);
+		}
+
+		public void Get(out RTCOptions output)
+		{
+			output = new RTCOptions();
+			output.Set(ref this);
 		}
 	}
 }
