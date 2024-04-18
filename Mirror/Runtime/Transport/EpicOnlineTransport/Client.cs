@@ -27,19 +27,22 @@ namespace EpicTransport {
         private TaskCompletionSource<Task> connectedComplete;
         private CancellationTokenSource cancelToken;
 
-        private ulong callbackId;
-        
+        /*
+         * private ulong callbackId;
         public NetworkConnectionType NetworkType { get; private set; } = NetworkConnectionType.NoConnection;
+        */
 
         private Client(EosTransport transport) : base(transport) {
             ConnectionTimeout = TimeSpan.FromSeconds(Math.Max(1, transport.timeout));
             
+            /*
             AddNotifyPeerConnectionEstablishedOptions options = new ()
             {
 	            LocalUserId = EOSSDKComponent.LocalUserProductId
             };
 
             callbackId = EOSSDKComponent.GetP2PInterface().AddNotifyPeerConnectionEstablished(ref options, null, OnPeerConnectionEstablished);
+            */
         }
 
         public static Client CreateClient(EosTransport transport, string host) {
@@ -55,6 +58,7 @@ namespace EpicTransport {
             return c;
         }
 
+        /*
         private void OnPeerConnectionEstablished(ref OnPeerConnectionEstablishedInfo data)
         {
 	        Debug.Log("Connection with peer established. Network type: "
@@ -64,6 +68,7 @@ namespace EpicTransport {
 
 	        NetworkType = data.NetworkType;
         }
+        */
 
         public async void Connect(string host) {
             cancelToken = new CancellationTokenSource();
@@ -113,7 +118,7 @@ namespace EpicTransport {
 
             SendInternal(hostProductId, socketId, InternalMessages.DISCONNECT);
             
-            EOSSDKComponent.GetP2PInterface().RemoveNotifyPeerConnectionEstablished(callbackId);
+            // EOSSDKComponent.GetP2PInterface().RemoveNotifyPeerConnectionEstablished(callbackId);
 
             Dispose();
             cancelToken?.Cancel();
