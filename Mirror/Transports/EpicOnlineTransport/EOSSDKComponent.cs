@@ -3,7 +3,6 @@ using Epic.OnlineServices.Logging;
 using Epic.OnlineServices.Platform;
 
 using System;
-using System.Collections;
 using System.Runtime.InteropServices;
 using Epic.OnlineServices.Lobby;
 #if UNITY_EDITOR && PARRELSYNC
@@ -13,16 +12,15 @@ using ParrelSync;
 using Steamworks;
 #endif
 using UnityEngine;
-using UnityEngine.Events;
 
-/// <summary>
-/// Manages the Epic Online Services SDK
-/// Do not destroy this component!
-/// The Epic Online Services SDK can only be initialized once,
-/// after releasing the SDK the game has to be restarted in order to initialize the SDK again.
-/// In the unity editor the OnDestroy function will not run so that we dont have to restart the editor after play.
-/// </summary>
 namespace EpicTransport {
+    /// <summary>
+    /// Manages the Epic Online Services SDK
+    /// Do not destroy this component!
+    /// The Epic Online Services SDK can only be initialized once,
+    /// after releasing the SDK the game has to be restarted in order to initialize the SDK again.
+    /// In the unity editor the OnDestroy function will not run so that we dont have to restart the editor after play.
+    /// </summary>
     [DefaultExecutionOrder(-32000)]
     public class EOSSDKComponent : MonoBehaviour {
 
