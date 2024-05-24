@@ -52,7 +52,7 @@ public class EOSLobbyUI : EOSLobby {
             Debug.LogError("Host address not found in lobby attributes. Cannot connect to host.");
             return;
         }
-        netManager.networkAddress = hostAddressAttribute.Data.Value.ToString();
+        netManager.networkAddress = hostAddressAttribute.Data.Value.Value.AsUtf8;
         netManager.StartClient();
     }
 
