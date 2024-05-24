@@ -231,7 +231,7 @@ namespace EpicTransport {
             DontDestroyOnLoad(gameObject);
 
 #if UNITY_EDITOR
-            var libraryPath = "Assets/Mirror/Runtime/Transport/EpicOnlineTransport/EOSSDK/" + Config.LibraryName;
+            var libraryPath = "Assets/Mirror/Transports/EpicOnlineTransport/EOSSDK/" + Config.LibraryName;
 
             libraryPointer = LoadLibrary(libraryPath);
             if (libraryPointer == IntPtr.Zero) {
