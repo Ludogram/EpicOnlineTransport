@@ -74,7 +74,6 @@ public class EOSLobbyHUD : MonoBehaviour {
         }
 
         manager.networkAddress = hostAddressAttribute.Data.Value.Value.AsUtf8;
-        Debug.LogError("netManager.networkAddress: " + manager.networkAddress);
         manager.StartClient();
     }
 
@@ -97,9 +96,6 @@ public class EOSLobbyHUD : MonoBehaviour {
         if (!EOSSDKComponent.Initialized) {
             return;
         }
-        
-        int width = 400;
-        GUILayout.BeginArea(new Rect(10 + offsetX, 40 + offsetY, width, 9999));
 
         //start UI
         GUILayout.BeginHorizontal();
@@ -122,8 +118,6 @@ public class EOSLobbyHUD : MonoBehaviour {
         GUILayout.EndScrollView();
 
         GUILayout.EndHorizontal();
-        
-        GUILayout.EndArea();
     }
 
     private void DrawMenuButtons() {
