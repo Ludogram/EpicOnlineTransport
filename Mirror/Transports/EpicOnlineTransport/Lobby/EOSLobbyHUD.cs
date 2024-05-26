@@ -16,10 +16,6 @@ public class EOSLobbyHUD : MonoBehaviour {
     [Header("Lobby Settings")]
     public string lobbyName = "My Lobby";
     
-    [Header("UI Settings")]
-    public int offsetX;
-    public int offsetY;
-    
     private bool _showLobbyList = false;
     private bool _showPlayerList = false;
 
