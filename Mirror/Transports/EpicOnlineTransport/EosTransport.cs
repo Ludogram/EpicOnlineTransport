@@ -271,6 +271,9 @@ namespace EpicTransport {
         }
 
         public override void Shutdown() {
+            if (!EOSSDKComponent.Initialized) {
+                return;
+            }
             if (EOSSDKComponent.CollectPlayerMetrics) {
                 // Stop Metrics collection session
                 EndPlayerSessionOptions endSessionOptions = new EndPlayerSessionOptions();

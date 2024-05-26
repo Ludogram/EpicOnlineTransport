@@ -127,6 +127,7 @@ namespace EpicTransport {
         protected bool initialized;
         public static bool Initialized {
             get {
+                if (Instance == null) return false;
                 return Instance.initialized;
             }
         }
@@ -134,6 +135,7 @@ namespace EpicTransport {
         protected bool isConnecting;
         public static bool IsConnecting {
             get {
+                if (Instance == null) return false;
                 return Instance.isConnecting;
             }
         }
@@ -672,6 +674,7 @@ namespace EpicTransport {
                 libraryPointer = IntPtr.Zero;
             }
 #endif
+            initialized = false;
         }
     }
 }

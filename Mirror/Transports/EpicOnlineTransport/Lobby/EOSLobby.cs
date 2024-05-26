@@ -6,12 +6,9 @@ using System.Collections.Generic;
 
 public class EOSLobby : MonoBehaviour {
     ///<returns>True if the user is connected to a lobby.</returns>
-    [HideInInspector] public bool ConnectedToLobby { get; private set; }
+    public bool ConnectedToLobby { get; private set; }
     ///<returns>The details of the lobby that the user is currently connected to.</returns>
     public LobbyDetails ConnectedLobbyDetails { get; private set; }
-
-    ///<value>The available keys assigned by the user.</value>
-    [SerializeField] public string[] AttributeKeys = new string[] { "lobby_name" };
 
     private const string DefaultAttributeKey = "default";
     public const string hostAddressKey = "host_address";
