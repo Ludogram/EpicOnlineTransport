@@ -182,8 +182,21 @@ namespace EpicTransport {
 #endif
         
 #if UNITY_EDITOR_OSX
-        [DllImport("libdl.dylib", EntryPoint = "dlopen")]
-        private static extern IntPtr LoadLibrary(String lpFileName, int flags = 2);
+        [DllImport("libdl.dylib")]
+        private static extern IntPtr dlopen(String lpFileName, int flags = 2);
+
+        private static IntPtr LoadLibrary(String lpFileName, int flags = 2)
+        {
+            var addr = dlopen(lpFileName, flags);
+            if (addr == IntPtr.Zero)
+            {
+                // Not using NanosmgException because it depends on nn_errno.
+                var error = Marshal.PtrToStringAnsi(dlerror());
+                throw new Exception("dlopen failed: " + lpFileName + " : " + error);
+            }
+
+            return addr;
+        }
 
         [DllImport("libdl.dylib", EntryPoint = "dlclose")]
         private static extern int FreeLibrary(IntPtr hLibModule);
