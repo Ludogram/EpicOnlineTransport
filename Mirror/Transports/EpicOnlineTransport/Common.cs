@@ -35,7 +35,7 @@ namespace EpicTransport {
         protected List<string> deadSockets;
         public bool ignoreAllMessages = false;
         
-        protected P2PInterface p2pInterface;
+        private P2PInterface p2pInterface;
 
         // Mapping from PacketKey to a List of Packet Lists
         protected Dictionary<PacketKey, List<List<Packet>>> incomingPackets;

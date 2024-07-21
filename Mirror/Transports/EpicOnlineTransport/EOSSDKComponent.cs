@@ -602,6 +602,9 @@ namespace EpicTransport {
                 
                 initialized = true;
                 isConnecting = false;
+                
+                SetApplicationStatus(true);
+                EOS.SetNetworkStatus(NetworkStatus.Online);
 
                 var authExpirationOptions = new Epic.OnlineServices.Connect.AddNotifyAuthExpirationOptions();
                 authExpirationHandle = EOS.GetConnectInterface().AddNotifyAuthExpiration(ref authExpirationOptions, null, OnAuthExpiration);
