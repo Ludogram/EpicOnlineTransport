@@ -235,7 +235,12 @@ namespace EpicTransport {
                 SocketId socketId;
                 while (transport.enabled && Receive(out ProductUserId clientUserID, out socketId, out var internalMessage, (byte) internal_ch)) {
                     if (internalMessage.Count == 1) {
-                        OnReceiveInternalData((InternalMessages) internalMessage[0], clientUserID, socketId);
+                        var firstByte = internalMessage.Array?[internalMessage.Offset];
+                        if (firstByte == null) {
+                            Debug.LogError("Internal message is null");
+                            return;
+                        }
+                        OnReceiveInternalData((InternalMessages) firstByte, clientUserID, socketId);
                         return; // Wait one frame
                     } else {
                         Debug.Log("Incorrect package length on internal channel.");
