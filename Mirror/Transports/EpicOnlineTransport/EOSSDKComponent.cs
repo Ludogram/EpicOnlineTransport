@@ -249,9 +249,8 @@ namespace EpicTransport {
             {
                 AndroidJavaClass unityPlayer = new AndroidJavaClass("com.unity3d.player.UnityPlayer");
                 AndroidJavaObject activity = unityPlayer.GetStatic<AndroidJavaObject>("currentActivity");
-                AndroidJavaObject context = activity.Call<AndroidJavaObject>("getApplicationContext");
                 AndroidJavaClass EOS_SDK_JAVA = new AndroidJavaClass("com.epicgames.mobile.eossdk.EOSSDK");
-                EOS_SDK_JAVA.CallStatic("init", context);
+                EOS_SDK_JAVA.CallStatic("init", activity);
             }
             
             // Prevent multiple instances
