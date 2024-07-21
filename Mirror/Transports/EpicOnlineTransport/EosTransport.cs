@@ -164,6 +164,12 @@ namespace EpicTransport {
         }
         public bool ClientActive() => client != null;
 
+	/*
+        public NetworkConnectionType GetClientNetworkType()
+        {
+            return client.NetworkType;
+        }
+	*/
 
         public override bool ServerActive() => server != null;
         public override void ServerStart() {
@@ -265,6 +271,9 @@ namespace EpicTransport {
         }
 
         public override void Shutdown() {
+            if (!EOSSDKComponent.Initialized) {
+                return;
+            }
             if (EOSSDKComponent.CollectPlayerMetrics) {
                 // Stop Metrics collection session
                 EndPlayerSessionOptions endSessionOptions = new EndPlayerSessionOptions();

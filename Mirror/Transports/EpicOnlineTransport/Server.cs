@@ -85,11 +85,17 @@ namespace EpicTransport {
                     break;
                 case InternalMessages.DISCONNECT:
                     if (epicToMirrorIds.TryGetValue(clientUserId, out int connId)) {
+                        Debug.Log($"[InternalMessages.DISCONNECT] Client with Product User ID {clientUserId} and connection id {connId} disconnected.");
                         OnDisconnected.Invoke(connId);
                         //CloseP2PSessionWithUser(clientUserId, socketId);
                         epicToMirrorIds.Remove(clientUserId);
                         epicToSocketIds.Remove(clientUserId);
-                        Debug.Log($"Client with Product User ID {clientUserId} disconnected.");
+                        CloseConnectionOptions closeOptions = new CloseConnectionOptions {
+                            LocalUserId = EOSSDKComponent.LocalUserProductId,
+                            RemoteUserId = clientUserId,
+                            SocketId = socketId
+                        };
+                        p2pInterface.CloseConnection(ref closeOptions);
                     } else {
                         OnReceivedError.Invoke(-1, new Exception("ERROR Unknown Product User ID"));
                     }
@@ -122,12 +128,14 @@ namespace EpicTransport {
         }
 
         public void Disconnect(int connectionId) {
-            if (epicToMirrorIds.TryGetValue(connectionId, out ProductUserId userId)) {
+            if (epicToMirrorIds.TryGetValue(connectionId, out ProductUserId userId))
+            {
+                Debug.Log($"EOS: Server disconnecting client with product id {userId} and connection id {connectionId}");
                 SocketId socketId;
                 epicToSocketIds.TryGetValue(userId, out socketId);
+                // epicToMirrorIds.Remove(userId);
+                // epicToSocketIds.Remove(userId);
                 SendInternal(userId, socketId, InternalMessages.DISCONNECT);
-                epicToMirrorIds.Remove(userId);
-                epicToSocketIds.Remove(userId);
             } else {
                 Debug.LogWarning("Trying to disconnect unknown connection id: " + connectionId);
             }
@@ -153,7 +161,7 @@ namespace EpicTransport {
                 epicToSocketIds.TryGetValue(userId, out socketId);
                 Send(userId, socketId, data, (byte)channelId);
             } else {
-                Debug.LogError("Trying to send on unknown connection: " + connectionId);
+                Debug.LogWarning("EOS: Trying to send on unknown connection: " + connectionId);
                 OnReceivedError.Invoke(connectionId, new Exception("ERROR Unknown Connection"));
             }
 
@@ -165,7 +173,7 @@ namespace EpicTransport {
                 userId.ToString(out userIdString);
                 return userIdString;
             } else {
-                Debug.LogError("Trying to get info on unknown connection: " + connectionId);
+                Debug.LogWarning("EOS: Trying to get info on unknown connection: " + connectionId);
                 OnReceivedError.Invoke(connectionId, new Exception("ERROR Unknown Connection"));
                 return string.Empty;
             }
@@ -176,10 +184,15 @@ namespace EpicTransport {
                 return;
             }
 
-            int connectionId = epicToMirrorIds.TryGetValue(remoteId, out int connId) ? connId : nextConnectionID++;
+            if (!epicToMirrorIds.TryGetValue(remoteId, out int connectionId))
+            {
+                Debug.LogWarning($"EOS: Connection failed, but no mirror id was found for product id {remoteId}");
+                return;
+            }
+
             OnDisconnected.Invoke(connectionId);
 
-            Debug.LogError("Connection Failed, removing user");
+            Debug.LogWarning($"EOS: Connection Failed, removing user {remoteId} with connection id {connectionId}");
             epicToMirrorIds.Remove(remoteId);
             epicToSocketIds.Remove(remoteId);
         }

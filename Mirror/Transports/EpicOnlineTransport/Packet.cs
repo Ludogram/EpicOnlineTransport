@@ -38,7 +38,7 @@ namespace EpicTransport {
         public void FromBytes(ArraySegment<byte> array) {
 	        id = BitConverter.ToInt32(array.AsSpan());
 	        fragment = BitConverter.ToInt32(array.AsSpan(4));
-	        moreFragments = array[8] == 1;
+	        moreFragments = array.Array?[array.Offset + 8] == 1;
 
 	        data = new byte[array.Count - 9];
 	        

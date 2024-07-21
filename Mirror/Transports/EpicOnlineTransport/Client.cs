@@ -1,6 +1,5 @@
 ﻿using Epic.OnlineServices;
 using Epic.OnlineServices.P2P;
-using Mirror;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
@@ -27,8 +26,22 @@ namespace EpicTransport {
         private TaskCompletionSource<Task> connectedComplete;
         private CancellationTokenSource cancelToken;
 
+        /*
+         * private ulong callbackId;
+        public NetworkConnectionType NetworkType { get; private set; } = NetworkConnectionType.NoConnection;
+        */
+
         private Client(EosTransport transport) : base(transport) {
             ConnectionTimeout = TimeSpan.FromSeconds(Math.Max(1, transport.timeout));
+            
+            /*
+            AddNotifyPeerConnectionEstablishedOptions options = new ()
+            {
+	            LocalUserId = EOSSDKComponent.LocalUserProductId
+            };
+
+            callbackId = EOSSDKComponent.GetP2PInterface().AddNotifyPeerConnectionEstablished(ref options, null, OnPeerConnectionEstablished);
+            */
         }
 
         public static Client CreateClient(EosTransport transport, string host) {
@@ -43,6 +56,18 @@ namespace EpicTransport {
 
             return c;
         }
+
+        /*
+        private void OnPeerConnectionEstablished(ref OnPeerConnectionEstablishedInfo data)
+        {
+	        Debug.Log("Connection with peer established. Network type: "
+	                  + data.NetworkType + ". UserId: "
+	                  + data.RemoteUserId + ". Connection Type: "
+	                  + data.ConnectionType);
+
+	        NetworkType = data.NetworkType;
+        }
+        */
 
         public async void Connect(string host) {
             cancelToken = new CancellationTokenSource();
@@ -59,7 +84,7 @@ namespace EpicTransport {
                 Task connectedCompleteTask = connectedComplete.Task;
 
                 if (await Task.WhenAny(connectedCompleteTask, Task.Delay(ConnectionTimeout/*, cancelToken.Token*/)) != connectedCompleteTask) {
-                    Debug.LogError($"Connection to {host} timed out.");
+                    Debug.LogWarning($"EOS: Connection to {host} timed out.");
                     OnConnected -= SetConnectedComplete;
                     OnConnectionFailed(hostProductId);
                 }
@@ -91,6 +116,8 @@ namespace EpicTransport {
             }
 
             SendInternal(hostProductId, socketId, InternalMessages.DISCONNECT);
+            
+            // EOSSDKComponent.GetP2PInterface().RemoveNotifyPeerConnectionEstablished(callbackId);
 
             Dispose();
             cancelToken?.Cancel();
@@ -149,12 +176,19 @@ namespace EpicTransport {
                     break;
                 case InternalMessages.DISCONNECT:
                     Connected = false;
-                    Debug.Log("Disconnected.");
+                    Debug.Log("[InternalMessages.DISCONNECT] Disconnected.");
 
                     OnDisconnected.Invoke();
+
+                    CloseConnectionOptions closeOptions = new CloseConnectionOptions {
+                        LocalUserId = EOSSDKComponent.LocalUserProductId,
+                        RemoteUserId = clientUserId,
+                        SocketId = socketId
+                    };
+                    p2pInterface.CloseConnection(ref closeOptions);
                     break;
                 default:
-                    Debug.Log("Received unknown message type");
+                    Debug.Log("Received unknown message type " + (int) type + " from " + clientUserId);
                     break;
             }
         }

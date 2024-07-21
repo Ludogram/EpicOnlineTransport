@@ -1,7 +1,5 @@
-﻿using Epic.OnlineServices.Logging;
 using System;
-using System.Collections;
-using System.Collections.Generic;
+using Epic.OnlineServices.Logging;
 using UnityEngine;
 
 namespace EpicTransport {
@@ -15,7 +13,7 @@ namespace EpicTransport {
                     Debug.Log($"Epic Manager: Category - {message.Category} Message - {message.Message}");
                     break;
                 case LogLevel.Error:
-                    Debug.LogError($"Epic Manager: Category - {message.Category} Message - {message.Message}");
+                    Debug.LogWarning($"Epic Manager Error: Category - {message.Category} Message - {message.Message}");
                     break;
                 case LogLevel.Warning:
                     Debug.LogWarning($"Epic Manager: Category - {message.Category} Message - {message.Message}");
