@@ -351,58 +351,6 @@ namespace EpicTransport {
 #endif
 	    }
 
-	    public void LeaveAllLobbies()
-	    {
-            if (!Initialized) return;
-		    var lobbyInterface = GetLobbyInterface();
-
-		    var createLobbySearchOptions = new CreateLobbySearchOptions
-		    {
-			    MaxResults = LobbyInterface.MaxLobbies
-		    };
-		    lobbyInterface.CreateLobbySearch(ref createLobbySearchOptions, out var lobbySearchHandle);
-		    var setTargetUserIdOptions = new LobbySearchSetTargetUserIdOptions
-		    {
-			    TargetUserId = LocalUserProductId
-		    };
-		    lobbySearchHandle.SetTargetUserId(ref setTargetUserIdOptions);
-		    var findOptions = new LobbySearchFindOptions
-		    {
-			    LocalUserId = LocalUserProductId
-		    };
-		    lobbySearchHandle.Find(ref findOptions, null,
-			    (ref LobbySearchFindCallbackInfo data) =>
-			    {
-				    if (data.ResultCode != Result.Success)
-				    {
-					    Debug.Log("Failed to find lobbies. Should be fine.");
-					    return;
-				    }
-				    var lobbySearchGetSearchResultCountOptions = new LobbySearchGetSearchResultCountOptions();
-				    var count = lobbySearchHandle.GetSearchResultCount(ref lobbySearchGetSearchResultCountOptions);
-
-				    for (int lobbyIndex = 0; lobbyIndex < count; lobbyIndex++)
-				    {
-					    var copySearchOption = new LobbySearchCopySearchResultByIndexOptions
-					    {
-						    LobbyIndex = (uint) lobbyIndex
-					    };
-					    lobbySearchHandle.CopySearchResultByIndex(ref copySearchOption, out var lobbyDetailsHandle);
-					    var copyInfoOptions = new LobbyDetailsCopyInfoOptions();
-					    lobbyDetailsHandle.CopyInfo(ref copyInfoOptions, out var lobbyDetailsInfo);
-					    if (lobbyDetailsInfo.HasValue)
-					    {
-                            var lobby = new EosLobby
-						    {
-                                LobbyId = lobbyDetailsInfo.Value.LobbyId
-						    };
-                            
-                            lobby.Leave();
-					    }
-				    }
-			    });
-	    }
-
         protected void InitializeImplementation() {
             isConnecting = true;
             var initializeOptions = new InitializeOptions() {
