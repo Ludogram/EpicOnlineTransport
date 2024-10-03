@@ -4,6 +4,7 @@ using Epic.OnlineServices.Platform;
 
 using System;
 using System.Collections;
+using System.Linq;
 using System.Runtime.InteropServices;
 using Epic.OnlineServices.Lobby;
 #if UNITY_EDITOR && PARRELSYNC
@@ -14,6 +15,9 @@ using Steamworks;
 #endif
 using UnityEngine;
 using UnityEngine.Events;
+#if UNITY_EDITOR && UNITY_6000 && UNITY_MPPM
+using Unity.Multiplayer.Playmode;
+#endif
 
 /// <summary>
 /// Manages the Epic Online Services SDK
@@ -303,6 +307,14 @@ namespace EpicTransport {
                 LoginUser();
                 return;
             }
+#elif UNITY_EDITOR && UNITY_6000 && UNITY_MPPM
+            if (!CurrentPlayer.ReadOnlyTags().Contains("Host"))
+            {
+                Initialize();
+                connectInterfaceCredentialType = ExternalCredentialType.DeviceidAccessToken;
+                LoginUser();
+                return;
+            }
 #endif
 	        
 		    _steamAppTicketResult = CallResult<EncryptedAppTicketResponse_t>
@@ -334,7 +346,7 @@ namespace EpicTransport {
 
             Initialize();
 #if UNITY_EDITOR && PARRELSYNC
-            if (ClonesManager.IsClone())
+	        if (ClonesManager.IsClone())
             {
                 devAuthToolCredentialName = ClonesManager.GetArgument();
                 connectInterfaceCredentialType = ExternalCredentialType.Epic;
@@ -343,7 +355,20 @@ namespace EpicTransport {
             }
             else
             {
-            connectInterfaceCredentialType = ExternalCredentialType.DeviceidAccessToken;
+                connectInterfaceCredentialType = ExternalCredentialType.DeviceidAccessToken;
+            }
+#elif UNITY_EDITOR && UNITY_6000 && UNITY_MPPM
+            if (!CurrentPlayer.ReadOnlyTags().Contains("Host"))
+            {
+                devAuthToolCredentialName = CurrentPlayer.ReadOnlyTags()
+                    .FirstOrDefault(t => t != null && t.ToLower().StartsWith("client")) ?? "client";
+                connectInterfaceCredentialType = ExternalCredentialType.Epic;
+                authInterfaceCredentialType = Epic.OnlineServices.Auth.LoginCredentialType.Developer;
+                authInterfaceLogin = true;
+            }
+            else
+            {
+                connectInterfaceCredentialType = ExternalCredentialType.DeviceidAccessToken;
             }
 #else
             connectInterfaceCredentialType = ExternalCredentialType.DeviceidAccessToken;
